@@ -9,7 +9,7 @@ function initialize() {
     appenders: {
       backendLaser: {
         type: "fileSync",
-        filename: "backendLaser.log",
+        filename: "skate.log",
         maxLogSize: 10458760, //10 MB
         backups: 3,
         layout: {
@@ -36,7 +36,7 @@ function initialize() {
     },
     categories: {
       default: {
-        appenders: ['backendLaser', 'out'],
+        appenders: ['skate', 'out'],
         level: 'debug'
       }
     },
