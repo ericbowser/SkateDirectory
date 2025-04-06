@@ -1,0 +1,22 @@
+
+.env*
+.flaskenv*
+!.env.project
+!.env.vault
+
+node_modules/
+
+.DS_Store
+.idea  
+
+*.pyc
+
+*.log
+
+.react-router/
+.env
+
+# Build artifacts
+*.
+build/ 
+objects/
