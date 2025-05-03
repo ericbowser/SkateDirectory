@@ -1,7 +1,7 @@
 ﻿const {Client, Pool} = require('pg');
 const config = require("dotenv").config();
 const path = require('path');
-const getLogger = require("../logs/backendLaserLog.js");
+const getLogger = require("../logs/skateLog.js");
 let _logger = getLogger();
 
 // Change .env based on local dev or prod

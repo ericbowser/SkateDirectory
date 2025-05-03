@@ -1,7 +1,7 @@
 ﻿openapi: 3.0.0
 servers:
   - description: Skate Directory
-    url: http://localhost:31667
+    url: http://127.0.0.1:31667
 info:
   description: SPA for skateboarding local sites
   version: 0.0.1
@@ -9,7 +9,7 @@ info:
   title: Skate Directory
   contact: {name: Eric}
 paths:
-  /skate-slc:
+  /skateparks:
     post:
       summary: 
       description: 

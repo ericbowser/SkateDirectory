@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Salt Lake City Skateparks</title>
+  <style>
+    #map {
+      height: 500px;
+      width: 100%;
+    }
+    .map-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .filters {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    .filters button {
+      padding: 8px 16px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .filters button:hover {
+      background: #2980b9;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="map-container">
+    <h1>Salt Lake City Skateparks</h1>
+    <table><thead><tr><th scope="col">Colors</th><th scope="col">Mana Symbols</th><th scope="col">Combo Name</th></tr></thead><tbody><tr><td>WGU</td><td><i class="mana-w"></i><i class="mana-g"></i><i class="mana-u"></i></td><td><strong>Bant</strong></td></tr><tr><td>UWB</td><td><i class="mana-u"></i><i class="mana-w"></i><i class="mana-b"></i></td><td><strong>Esper</strong></td></tr><tr><td>BRU</td><td><i class="mana-b"></i><i class="mana-r"></i><i class="mana-u"></i></td><td><strong>Grixis</strong></td></tr><tr><td>RBG</td><td><i class="mana-r"></i><i class="mana-b"></i><i class="mana-g"></i></td><td><strong>Jund</strong></td></tr><tr><td>GRW</td><td><i class="mana-g"></i><i class="mana-r"></i><i class="mana-w"></i></td><td><strong>Naya</strong></td></tr><tr><td>WBG</td><td><i class="mana-w"></i><i class="mana-b"></i><i class="mana-g"></i></td><td><strong>Abzan</strong></td></tr><tr><td>URW</td><td><i class="mana-u"></i><i class="mana-r"></i><i class="mana-w"></i></td><td><strong>Jeskai</strong></td></tr><tr><td>BGU</td><td><i class="mana-b"></i><i class="mana-g"></i><i class="mana-u"></i></td><td><strong>Sultai</strong></td></tr><tr><td>RWB</td><td><i class="mana-r"></i><i class="mana-w"></i><i class="mana-b"></i></td><td><strong>Mardu</strong></td></tr><tr><td>GRU</td><td><i class="mana-g"></i><i class="mana-r"></i><i class="mana-u"></i></td><td><strong>Temur</strong></td></tr></tbody></table> 
+    <div class="filters">
+      <button onclick="filterParks('all')">All Parks</button>
+      <button onclick="filterParks('beginner')">Beginner Friendly</button>
+      <button onclick="filterParks('advanced')">Advanced Features</button>
+      <button onclick="filterParks('indoor')">Indoor Parks</button>
+    </div>
+    
+    <div id="map"></div>
+  </div>
+
+  <script>
+    // Sample data for skateparks
+    const skateparks = [
+      {
+        name: "Fairmont Skatepark",
+        position: { lat: 40.7365, lng: -111.8762 },
+        description: "Bowl-style park with multiple lines and street features",
+        difficulty: "intermediate",
+        type: "outdoor"
+      },
+      {
+        name: "Jordan Park Skatepark",
+        position: { lat: 40.7408, lng: -111.9214 },
+        description: "Beginner-friendly park with small ramps and rails",
+        difficulty: "beginner",
+        type: "outdoor"
+      },
+      {
+        name: "9th & 9th Skatepark",
+        position: { lat: 40.7491, lng: -111.8655 },
+        description: "Technical street-style park with ledges and stairs",
+        difficulty: "advanced",
+        type: "outdoor"
+      },
+      {
+        name: "Shred Shed Indoor Park",
+        position: { lat: 40.7613, lng: -111.8920 },
+        description: "Premium indoor facility with foam pit and mega ramp",
+        difficulty: "advanced",
+        type: "indoor"
+      }
+    ];
+
+    let map;
+    let markers = [];
+
+    function initMap() {
+      // Initialize the map centered on Salt Lake City
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.7608, lng: -111.8910 },
+        zoom: 12,
+      });
+      
+      // Add all markers initially
+      addMarkers('all');
+    }
+
+    function addMarkers(filter) {
+      // Clear existing markers
+      markers.forEach(marker => marker.setMap(null));
+      markers = [];
+      
+      // Filter parks based on selection
+      const filteredParks = skateparks.filter(park => {
+        if (filter === 'all') return true;
+        if (filter === 'beginner') return park.difficulty === 'beginner';
+        if (filter === 'advanced') return park.difficulty === 'advanced';
+        if (filter === 'indoor') return park.type === 'indoor';
+        return true;
+      });
+      
+      // Add new markers
+      filteredParks.forEach(park => {
+        const marker = new google.maps.Marker({
+          position: park.position,
+          map: map,
+          title: park.name
+        });
+        
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div>
+              <h3>${park.name}</h3>
+              <p>${park.description}</p>
+              <p>Difficulty: ${park.difficulty}</p>
+              <button onclick="location.href='/parks/${park.name.toLowerCase().replace(/\s+/g, '-')}'">
+                View Details
+              </button>
+            </div>
+          `
+        });
+        
+        marker.addListener("click", () => {
+          infoWindow.open(map, marker);
+        });
+        
+        markers.push(marker);
+      });
+    }
+
+    function filterParks(filter) {
+      addMarkers(filter);
+    }
+
+    // Note: In a real implementation, you would replace this with your actual Google Maps API key
+    // window.initMap = initMap;
+  </script>
+  <!-- In a real implementation, include your API key here -->
+  <!-- <script async src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script> -->
+</body>
+</html>

@@ -4,9 +4,9 @@ const config = dotenv.config({path: Path.resolve(__dirname, '.env')});
 const server = require('./server');
 const http = require("node:http");
 const cors = require('cors');
-const logger = require('./logs/backendLaserLog');
+const logger = require('./logs/skateLog');
 const _logger = logger();
-_logger.info('Starting LaserTags API');
+_logger.info('Starting Skate Directory API');
 
 const swaggerJsdoc = require('swagger-jsdoc');
 const express = require("express");
@@ -25,13 +25,13 @@ const swaggerOptions = {
         schemes: ['http'],
         openapi: "3.0.0",
         info: {
-            title: 'LaserTags API',
+            title: 'Skate Directory API',
             version: '0.0.1',
-            description: 'API for LaserTags',
+            description: 'API for Skate Spots',
         },
         contact:{
             name: 'API Support',
-            url: '',
+            url: '127.0.0.1:31777',
             email: 'erbows@collar-culture.com'
         },
         servers: [

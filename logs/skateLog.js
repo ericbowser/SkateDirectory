@@ -7,9 +7,9 @@ function initialize() {
   log4js.addLayout('json', jsonLayout);
   log4js.configure({
     appenders: {
-      backendLaser: {
+      skateLog: {
         type: "fileSync",
-        filename: "skate.log",
+        filename: "../skatelog.log",
         maxLogSize: 10458760, //10 MB
         backups: 3,
         layout: {
@@ -31,12 +31,12 @@ function initialize() {
         type: 'json'
       }
     },
-    assist_console: {
+    skateLog_console: {
       type: "out"
     },
     categories: {
       default: {
-        appenders: ['skate', 'out'],
+        appenders: ['skateLog', 'out'],
         level: 'debug'
       }
     },
