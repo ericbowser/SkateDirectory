@@ -13,6 +13,10 @@ node_modules/
 
 *.log
 
-node_modules/
+.react-router/
+.env
 
- 
+# Build artifacts
+*.
+build/ 
+objects/

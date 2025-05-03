@@ -1,54 +1,20 @@
-const Path = require('path');
-const dotenv = require("dotenv");
-const config = dotenv.config({path: Path.resolve(__dirname, '.env')});
-const server = require('./server');
-const http = require("node:http");
-const cors = require('cors');
-const logger = require('./logs/skateLog');
-const _logger = logger();
-_logger.info('Starting Skate Directory API');
+﻿import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router";
 
-const swaggerJsdoc = require('swagger-jsdoc');
-const express = require("express");
-const {serve, setup} = require("swagger-ui-express");
+import React from "react";
+import ReactDOM from "react-dom/client";
 
-const httpPort = process.env.PORT || 3003;
-console.log('passed port to use for http', httpPort);
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <div>Hello World</div>,
+  },
+]);
 
-const app = express();
-app.use(server);
-app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+const root = document.getElementById("root");
 
-const swaggerOptions = {
-    definition: {
-        schemes: ['http'],
-        openapi: "3.0.0",
-        info: {
-            title: 'Skate Directory API',
-            version: '0.0.1',
-            description: 'API for Skate Spots',
-        },
-        contact:{
-            name: 'API Support',
-            url: '127.0.0.1:31777',
-            email: 'erbows@collar-culture.com'
-        },
-        servers: [
-            {
-                url: `http://localhost:${httpPort}`,
-                definition: 'Local API'
-            }
-        ]
-    },
-    apis: ['./docs/LaserTagsApi.yaml']
-}
-
-const httpServer = http.createServer(app);
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', serve, setup(swaggerDocs))
-
-httpServer.listen(httpPort, () => {
-    console.log(`Server listening on http://localhost:${httpPort}`);
-});
-
+ReactDOM.createRoot(root).render(
+  <RouterProvider router={router} />
+);

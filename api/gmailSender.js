@@ -6,7 +6,7 @@ async function sendEmailWithAttachment(from, recipient, subject, message) {
         host: 'smtp.gmail.com',
         port: 587,
         auth: {
-            user: 'ericryanbowser@gmail.com',
+            user: 'erbows@collar-culture.com',
             pass: config.parsed.GMAIL_APP_PASSWORD,
         },
     });
