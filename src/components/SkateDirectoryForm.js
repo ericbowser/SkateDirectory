@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './SkateparkForm.css';
+// import './SkateparkForm.css';
 
 const SkateparkForm = () => {
   const [formData, setFormData] = useState({
@@ -46,7 +46,7 @@ const SkateparkForm = () => {
       }
     };
 
-    fetchFeatures();
+    fetchFeatures().then(features => console.log(features));
   }, []);
 
   // Handle form input changes

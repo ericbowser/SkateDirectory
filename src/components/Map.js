@@ -22,7 +22,7 @@ const MapView = () => {
     document.head.appendChild(googleMapScript);
 
     // Fetch skatepark data
-    fetchParks();
+    fetchParks().then(parks => console.log(parks));
 
     return () => {
       // Clean up Google Maps script

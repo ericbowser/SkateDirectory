@@ -1,5 +1,8 @@
 ﻿import React, { useState } from 'react';
 import { Outlet, Link } from 'react-router';
+import SkateDirectoryForm from "./components/SkateDirectoryForm";
+import Map from "./components/Map";
+
 
 export default function AppLayout() {
   return (
@@ -8,12 +11,13 @@ export default function AppLayout() {
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">SLC Skate Directory</h1>
           <nav>
-            <ul className="flex space-x-6">
-              <li><Link to="/" className="hover:text-blue-200 transition-colors">Map</Link></li>
-              <li><Link to="/parks" className="hover:text-blue-200 transition-colors">Parks</Link></li>
-              <li><Link to="/add-park" className="hover:text-blue-200 transition-colors">Add Park</Link></li>
-              <li><Link to="/about" className="hover:text-blue-200 transition-colors">About</Link></li>
-            </ul>
+            <Map/>
+            {/*<ul className="flex space-x-6">*/}
+            {/*  <li><Link to="/" className="hover:text-blue-200 transition-colors">Map</Link></li>*/}
+            {/*  <li><Link to="/parks" className="hover:text-blue-200 transition-colors">Parks</Link></li>*/}
+            {/*  <li><Link to="/add-park" className="hover:text-blue-200 transition-colors">Add Park</Link></li>*/}
+            {/*  <li><Link to="/about" className="hover:text-blue-200 transition-colors">About</Link></li>*/}
+            {/*</ul>*/}
           </nav>
         </div>
       </header>
