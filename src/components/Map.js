@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router';
+import {FetchData, PostData} from "../../api/http";
 
 const MapView = () => {
   const [parks, setParks] = useState([]);
@@ -22,13 +23,27 @@ const MapView = () => {
     document.head.appendChild(googleMapScript);
 
     // Fetch skatepark data
-    fetchParks().then(parks => console.log(parks));
+    fetchParks().then(parks => {
+      console.log('parks', parks);
+      setParks(parks);
+      setLoading(false);
+    });
 
     return () => {
       // Clean up Google Maps script
       document.head.removeChild(googleMapScript);
     };
   }, []);
+  
+  async function fetchParks() {
+    const responseData = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`)
+    if(!responseData) {
+      setError('Failed to load skatepark data. Please try again later.')
+      return null;
+    } 
+    
+    setParks(responseData);
+  }
 
   // Initialize map once the script is loaded and parks are fetched
   useEffect(() => {
@@ -44,19 +59,6 @@ const MapView = () => {
     }
   }, [activeFilter]);
 
-  const fetchParks = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get('/api/skateparks');
-      setParks(response.data);
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to load skatepark data. Please try again later.');
-      setLoading(false);
-      console.error('Error fetching skateparks:', err);
-    }
-  };
-
   const initializeMap = () => {
     // Center map on Salt Lake City
     const slc = { lat: 40.7608, lng: -111.8910 };
@@ -70,7 +72,7 @@ const MapView = () => {
     };
 
     // Create the map
-    const map = new window.google.maps.Map(mapRef.current, mapOptions);
+    const map = window.map
     mapInstanceRef.current = map;
 
     // Add markers for each park
@@ -166,7 +168,7 @@ const MapView = () => {
   return (
     <div className="map-view">
       <h2 className="text-2xl font-bold mb-4">Salt Lake City Skateparks</h2>
-
+      <button id='fetchParks' onClick={fetchParks}>Fetch Parks</button>
       <div className="filters mb-4">
         <div className="flex flex-wrap gap-2">
           <button
