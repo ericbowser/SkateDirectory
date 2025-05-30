@@ -22,7 +22,7 @@ const SkateparkForm = () => {
   });
 
   const [availableFeatures, setAvailableFeatures] = useState([{}]);
-  const [parks, setParks] = useState([{}]);
+  const [parks, setParks] = useState(null);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
   const [newFeature, setNewFeature] = useState({
@@ -35,7 +35,7 @@ const SkateparkForm = () => {
   const fetchParks = async () => {
     try {
       const response = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
-      setParks(response.data);
+      setParks(response);
     } catch (error) {
       console.error('Error fetching features:', error);
       setMessage({
@@ -45,12 +45,14 @@ const SkateparkForm = () => {
     }
   }
   
-  // // Fetch available features from the database
-  // useEffect(() => {
-  //   fetchParks().then(parks => {
-  //     console.log("fetched parks", parks);
-  //   });
-  // }, [parks]);
+  // Fetch available features from the database
+  useEffect(() => {
+    if (!parks) {
+      fetchParks().then(parks => {
+        console.log("fetched parks", parks);
+      });
+    }
+  }, [parks]);
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -223,11 +225,11 @@ const SkateparkForm = () => {
   }, {});
 
   return (
-    <div className="container mt-8">
+    <div className="skatepark-form-container">
       <h2>Add New Skatepark</h2>
 
       {message.text && (
-        <div className={`message ${message.type}`}>
+        <div className={`meskatepark-form-containere.type}`}>
           {message.text}
         </div>
       )}

@@ -21,4 +21,4 @@ node_modules/
 build/ 
 objects/
 
-src/styles/output.css
+**/**/output.css

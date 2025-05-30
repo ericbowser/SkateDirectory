@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import {FetchData, PostData} from "../../api/http";
+import axios from 'axios';
 
 const ParksList = () => {
   const [parks, setParks] = useState([]);
@@ -12,18 +12,10 @@ const ParksList = () => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [difficultyFilter, setDifficultyFilter] = useState('all');
 
-  useEffect(() => {
-    fetchParks().then(parks => {console.log("fetched parks", parks)});
-  }, []);
-
-  useEffect(() => {
-    filterAndSortParks();
-  }, [parks, search, sortBy, sortOrder, difficultyFilter]);
-
   const fetchParks = async () => {
     setLoading(true);
     try {
-      const response = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
+      const response = await axios.get('/api/skateparks');
       setParks(response.data);
       setFilteredParks(response.data);
       setLoading(false);
@@ -33,6 +25,19 @@ const ParksList = () => {
       console.error('Error fetching skateparks:', err);
     }
   };
+  
+  useEffect(() => {
+    if(!parks) {
+      fetchParks().then(parks => parks.forEach(park => console.log(park.ParkName)));
+    } else {
+      filterAndSortParks();
+    }
+  }, [parks]);
+
+  useEffect(() => {
+    filterAndSortParks();
+  }, [parks, search, sortBy, sortOrder, difficultyFilter]);
+
 
   const filterAndSortParks = () => {
     // Apply search filter
