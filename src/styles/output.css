@@ -1043,6 +1043,16 @@ video {
   transition-duration: 150ms;
 }
 
+.app-container {
+  width: 500px;
+  max-width: 300px;
+  margin: 15px;
+  padding: 10px;
+}
+
+.skatepark-form {
+}
+
 .hover\:bg-blue-600:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1));

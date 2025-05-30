@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-// import './SkateparkForm.css';
+import {FetchData, PostData} from "../../api/http";
+import ParksList from './ParksList';
 
 const SkateparkForm = () => {
   const [formData, setFormData] = useState({
@@ -21,7 +21,8 @@ const SkateparkForm = () => {
     isVariableClosing: true // Flag for variable closing time (dusk)
   });
 
-  const [availableFeatures, setAvailableFeatures] = useState([]);
+  const [availableFeatures, setAvailableFeatures] = useState([{}]);
+  const [parks, setParks] = useState([{}]);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
   const [newFeature, setNewFeature] = useState({
@@ -30,24 +31,26 @@ const SkateparkForm = () => {
     FeatureCategory: 'Street'
   });
   const [showNewFeatureForm, setShowNewFeatureForm] = useState(false);
-
-  // Fetch available features from the database
-  useEffect(() => {
-    const fetchFeatures = async () => {
-      try {
-        const response = await axios.get('/api/features');
-        setAvailableFeatures(response.data);
-      } catch (error) {
-        console.error('Error fetching features:', error);
-        setMessage({
-          text: 'Failed to load features. Please refresh the page.',
-          type: 'error'
-        });
-      }
-    };
-
-    fetchFeatures().then(features => console.log(features));
-  }, []);
+  
+  const fetchParks = async () => {
+    try {
+      const response = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
+      setParks(response.data);
+    } catch (error) {
+      console.error('Error fetching features:', error);
+      setMessage({
+        text: 'Failed to load features. Please refresh the page.',
+        type: 'error'
+      });
+    }
+  }
+  
+  // // Fetch available features from the database
+  // useEffect(() => {
+  //   fetchParks().then(parks => {
+  //     console.log("fetched parks", parks);
+  //   });
+  // }, [parks]);
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -119,7 +122,7 @@ const SkateparkForm = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post('/api/features', newFeature);
+      const response = await PostData(`${process.env.BASE_URL}${process.env.REL_GET_FEATURE}`, newFeature);
 
       // Add new feature to available features
       setAvailableFeatures(prev => [...prev, response.data]);
@@ -170,8 +173,9 @@ const SkateparkForm = () => {
         LastUpdatedDate: new Date().toISOString().split('T')[0]
       };
 
+      console.log('Skatepark Data:', skateparkData);
       // Send to API
-      const response = await axios.post('/api/skateparks', skateparkData);
+      const response = await PostData(`${process.env.BASE_URL}${process.env.REL_ADD_PARK}`, skateparkData);
 
       setMessage({
         text: `Successfully added ${response.data.ParkName} to the database!`,
@@ -219,7 +223,7 @@ const SkateparkForm = () => {
   }, {});
 
   return (
-    <div className="skatepark-form-container">
+    <div className="container mt-8">
       <h2>Add New Skatepark</h2>
 
       {message.text && (
@@ -228,11 +232,11 @@ const SkateparkForm = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="skatepark-form">
-        <div className="form-section">
+      <form onSubmit={handleSubmit}>
+        <div>
           <h3>Basic Information</h3>
 
-          <div className="form-group">
+          <div>
             <label htmlFor="ParkName">Skatepark Name *</label>
             <input
               type="text"
@@ -244,7 +248,7 @@ const SkateparkForm = () => {
             />
           </div>
 
-          <div className="form-group">
+          <div>
             <label htmlFor="ParkDescription">Description *</label>
             <textarea
               id="ParkDescription"
@@ -256,8 +260,8 @@ const SkateparkForm = () => {
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div>
+            <div>
               <label htmlFor="DifficultyOpinion">Difficulty Level</label>
               <select
                 id="DifficultyOpinion"
@@ -272,7 +276,7 @@ const SkateparkForm = () => {
               </select>
             </div>
 
-            <div className="form-group">
+            <div>
               <label htmlFor="ParkStatus">Status</label>
               <select
                 id="ParkStatus"
@@ -289,10 +293,10 @@ const SkateparkForm = () => {
           </div>
         </div>
 
-        <div className="form-section">
+        <div>
           <h3>Location</h3>
 
-          <div className="form-group">
+          <div>
             <label htmlFor="ParkAddress">Address</label>
             <input
               type="text"
@@ -317,7 +321,7 @@ const SkateparkForm = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div>
               <label htmlFor="LocationLongitude">Longitude *</label>
               <input
                 type="text"
@@ -331,7 +335,7 @@ const SkateparkForm = () => {
             </div>
           </div>
 
-          <div className="form-group">
+          <div>
             <label htmlFor="ParkWebsite">Website (Optional)</label>
             <input
               type="url"
@@ -344,15 +348,15 @@ const SkateparkForm = () => {
           </div>
         </div>
 
-        <div className="form-section">
+        <div>
           <h3>Features</h3>
 
           {Object.entries(groupedFeatures).map(([category, features]) => (
-            <div key={category} className="feature-category">
+            <div key={category}>
               <h4>{category}</h4>
-              <div className="feature-checkboxes">
+              <div>
                 {features.map(feature => (
-                  <div key={feature.Id} className="feature-checkbox">
+                  <div key={feature.Id}>
                     <input
                       type="checkbox"
                       id={`feature-${feature.Id}`}
@@ -369,12 +373,12 @@ const SkateparkForm = () => {
             </div>
           ))}
 
-          <div className="add-feature-section">
+          <div>
             {showNewFeatureForm ? (
-              <div className="new-feature-form">
+              <div>
                 <h4>Add New Feature</h4>
-                <div className="form-row">
-                  <div className="form-group">
+                <div>
+                  <div>
                     <label htmlFor="FeatureName">Feature Name *</label>
                     <input
                       type="text"
@@ -386,7 +390,7 @@ const SkateparkForm = () => {
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div >
                     <label htmlFor="FeatureType">Feature Type</label>
                     <select
                       id="FeatureType"
@@ -404,7 +408,7 @@ const SkateparkForm = () => {
                     </select>
                   </div>
 
-                  <div className="form-group">
+                  <div>
                     <label htmlFor="FeatureCategory">Category</label>
                     <select
                       id="FeatureCategory"
@@ -421,7 +425,7 @@ const SkateparkForm = () => {
                   </div>
                 </div>
 
-                <div className="form-buttons">
+                <div>
                   <button
                     type="button"
                     onClick={addNewFeature}
@@ -440,7 +444,6 @@ const SkateparkForm = () => {
             ) : (
               <button
                 type="button"
-                className="add-feature-button"
                 onClick={() => setShowNewFeatureForm(true)}
               >
                 + Add New Feature
@@ -449,7 +452,7 @@ const SkateparkForm = () => {
           </div>
         </div>
 
-        <div className="form-section">
+        <div >
           <h3>Hours of Operation</h3>
 
           <div className="form-row">
@@ -464,7 +467,7 @@ const SkateparkForm = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div>
               <label htmlFor="Closes">Closes At</label>
               {formData.isVariableClosing ? (
                 <select
@@ -488,7 +491,7 @@ const SkateparkForm = () => {
             </div>
           </div>
 
-          <div className="form-group checkbox-group">
+          <div>
             <input
               type="checkbox"
               id="isVariableClosing"
@@ -499,7 +502,7 @@ const SkateparkForm = () => {
             <label htmlFor="isVariableClosing">Variable Closing Time (Dusk/Sunset)</label>
           </div>
 
-          <div className="form-group checkbox-group">
+          <div>
             <input
               type="checkbox"
               id="HasLighting"

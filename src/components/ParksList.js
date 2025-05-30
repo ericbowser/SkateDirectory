@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import axios from 'axios';
+import {FetchData, PostData} from "../../api/http";
 
 const ParksList = () => {
   const [parks, setParks] = useState([]);
@@ -13,7 +13,7 @@ const ParksList = () => {
   const [difficultyFilter, setDifficultyFilter] = useState('all');
 
   useEffect(() => {
-    fetchParks();
+    fetchParks().then(parks => {console.log("fetched parks", parks)});
   }, []);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ const ParksList = () => {
   const fetchParks = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/skateparks');
+      const response = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
       setParks(response.data);
       setFilteredParks(response.data);
       setLoading(false);
