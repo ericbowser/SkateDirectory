@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import axios from 'axios';
+import {FetchData, PostData} from "../../api/http";
 
 const ParksList = () => {
   const [parks, setParks] = useState([]);
@@ -15,9 +15,9 @@ const ParksList = () => {
   const fetchParks = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/skateparks');
-      setParks(response.data);
-      setFilteredParks(response.data);
+      const response = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
+      setParks(response);
+      setFilteredParks(response);
       setLoading(false);
     } catch (err) {
       setError('Failed to load skatepark data. Please try again later.');
@@ -27,16 +27,12 @@ const ParksList = () => {
   };
   
   useEffect(() => {
-    if(!parks) {
-      fetchParks().then(parks => parks.forEach(park => console.log(park.ParkName)));
-    } else {
+    if(parks.length === 0) {
+      fetchParks().then(response => console.log(response));
+    } else if (parks.length > 0) {
       filterAndSortParks();
     }
   }, [parks]);
-
-  useEffect(() => {
-    filterAndSortParks();
-  }, [parks, search, sortBy, sortOrder, difficultyFilter]);
 
 
   const filterAndSortParks = () => {
@@ -44,9 +40,9 @@ const ParksList = () => {
     let result = parks.filter(park => {
       const searchLower = search.toLowerCase();
       return (
-        park.ParkName.toLowerCase().includes(searchLower) ||
-        park.ParkDescription.toLowerCase().includes(searchLower) ||
-        park.ParkAddress.toLowerCase().includes(searchLower)
+        park.parkName.toLowerCase().includes(searchLower) ||
+        park.parkDescription.toLowerCase().includes(searchLower) ||
+        park.parkAddress.toLowerCase().includes(searchLower)
       );
     });
 
