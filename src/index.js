@@ -1,28 +1,29 @@
 ﻿import React from 'react';
-import {createRoot} from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import App from './App.js';
-import {createBrowserRouter, RouterProvider} from "react-router";
+import { createBrowserRouter, RouterProvider } from "react-router";
 import ParksList from "./components/ParksList";
 import SkateParkForm from "./components/SkateParkForm";
-import ReactDOM from "react-dom/client";
 
-const container = document.getElementById('root');
-const root = createRoot(container);
 let router = createBrowserRouter([
   {
     path: "/",
-    Component: <App/>
+    Component: App
   },
   {
     path: "/parks",
-    Component: <ParksList />
+    Component: ParksList
   },
   {
     path: "/skateparkform",
-    Component: <SkateParkForm />
+    Component: SkateParkForm
   },
 ]);
 
-ReactDOM.createRoot(root).render(
+const container = document.getElementById('root');
+const root = createRoot(container);
+root.render(
+  <React.StrictMode>
     <RouterProvider router={router} />
+  </React.StrictMode>
 );

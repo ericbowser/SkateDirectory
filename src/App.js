@@ -6,7 +6,7 @@ import Map from "./components/Map";
 import './styles/output.css';
 
 
-export default function AppLayout() {
+export default function App() {
   return (
     <div className="w-full h-screen flex flex-col">
       <header className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 shadow-md">
@@ -17,8 +17,7 @@ export default function AppLayout() {
             <ul className="flex space-x-6">
               <li><Link to="/" className="hover:text-blue-200 transition-colors">Map</Link></li>
               <li><Link to="/parks" className="hover:text-blue-200 transition-colors">Parks</Link></li>
-              <li><Link to="/add-park" className="hover:text-blue-200 transition-colors">Add Park</Link></li>
-              <li><Link to="/about" className="hover:text-blue-200 transition-colors">About</Link></li>
+              <li><Link to="/skatepark-form" className="hover:text-blue-200 transition-colors">Add Park</Link></li>
             </ul>
           </nav>
         </div>
