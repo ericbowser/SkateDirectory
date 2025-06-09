@@ -17,7 +17,7 @@ export default function App() {
             <ul className="flex space-x-6">
               <li><Link to="/" className="hover:text-blue-200 transition-colors">Map</Link></li>
               <li><Link to="/parks" className="hover:text-blue-200 transition-colors">Parks</Link></li>
-              <li><Link to="/skatepark-form" className="hover:text-blue-200 transition-colors">Add Park</Link></li>
+              <li><Link to="/addpark" className="hover:text-blue-200 transition-colors">Add Park</Link></li>
             </ul>
           </nav>
         </div>

@@ -1,7 +1,6 @@
 ﻿import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router';
-import {FetchData, PostData} from "../../api/http";
+import {FetchData} from "../../api/http";
 
 const MapView = () => {
   const [parks, setParks] = useState([]);

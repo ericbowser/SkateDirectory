@@ -1,13 +1,17 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, {useState, useEffect} from 'react';
 import {FetchData, PostData} from "../../api/http";
-import ParksList from './ParksList';
+import FormControl from "react-bootstrap/FormControl";
+import Form from "react-bootstrap/Form";
+import FormLabel from "react-bootstrap/FormLabel";
+import {Button, FormText} from "react-bootstrap";
+
 
 const SkateparkForm = () => {
   const [formData, setFormData] = useState({
-    ParkName: '',
-    ParkStatus: 'Active',
-    LocationLatitude: '',
-    LocationLongitude: '',
+    parkName: '',
+    parkStatus: 'Active',
+    locationLatitude: '',
+    locationLongitude: '',
     ParkAddress: '',
     DifficultyOpinion: 'Intermediate',
     HasLighting: false,
@@ -21,17 +25,10 @@ const SkateparkForm = () => {
     isVariableClosing: true // Flag for variable closing time (dusk)
   });
 
-  const [availableFeatures, setAvailableFeatures] = useState([{}]);
   const [parks, setParks] = useState(null);
-  const [message, setMessage] = useState({ text: '', type: '' });
+  const [message, setMessage] = useState({text: '', type: ''});
   const [loading, setLoading] = useState(false);
-  const [newFeature, setNewFeature] = useState({
-    FeatureName: '',
-    FeatureType: 'Obstacle',
-    FeatureCategory: 'Street'
-  });
-  const [showNewFeatureForm, setShowNewFeatureForm] = useState(false);
-  
+
   const fetchParks = async () => {
     try {
       const response = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
@@ -44,7 +41,7 @@ const SkateparkForm = () => {
       });
     }
   }
-  
+
   // Fetch available features from the database
   useEffect(() => {
     if (!parks) {
@@ -56,7 +53,7 @@ const SkateparkForm = () => {
 
   // Handle form input changes
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const {name, value, type, checked} = e.target;
 
     if (type === 'checkbox') {
       setFormData(prev => ({
@@ -101,67 +98,16 @@ const SkateparkForm = () => {
     });
   };
 
-  // Handle new feature input
-  const handleNewFeatureChange = (e) => {
-    const { name, value } = e.target;
-    setNewFeature(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Add new feature to database
-  const addNewFeature = async (e) => {
-    e.preventDefault();
-
-    if (!newFeature.FeatureName.trim()) {
-      setMessage({
-        text: 'Feature name is required',
-        type: 'error'
-      });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await PostData(`${process.env.BASE_URL}${process.env.REL_GET_FEATURE}`, newFeature);
-
-      // Add new feature to available features
-      setAvailableFeatures(prev => [...prev, response.data]);
-
-      // Reset new feature form
-      setNewFeature({
-        FeatureName: '',
-        FeatureType: 'Obstacle',
-        FeatureCategory: 'Street'
-      });
-
-      setShowNewFeatureForm(false);
-      setMessage({
-        text: `Added new feature: ${response.data.FeatureName}`,
-        type: 'success'
-      });
-    } catch (error) {
-      console.error('Error adding new feature:', error);
-      setMessage({
-        text: error.response?.data?.message || 'Error adding feature',
-        type: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ text: '', type: '' });
+    setMessage({text: '', type: ''});
 
     try {
       // Validate coordinates
-      const lat = parseFloat(formData.LocationLatitude);
-      const lng = parseFloat(formData.LocationLongitude);
+      const lat = parseFloat(formData.locationLatitude);
+      const lng = parseFloat(formData.locationLongitude);
 
       if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
         throw new Error('Invalid coordinates. Latitude must be between -90 and 90, Longitude between -180 and 180.');
@@ -170,8 +116,8 @@ const SkateparkForm = () => {
       // Prepare data for API
       const skateparkData = {
         ...formData,
-        LocationLatitude: lat,
-        LocationLongitude: lng,
+        locationLatitude: lat,
+        locationLongitude: lng,
         LastUpdatedDate: new Date().toISOString().split('T')[0]
       };
 
@@ -180,16 +126,16 @@ const SkateparkForm = () => {
       const response = await PostData(`${process.env.BASE_URL}${process.env.REL_ADD_PARK}`, skateparkData);
 
       setMessage({
-        text: `Successfully added ${response.data.ParkName} to the database!`,
+        text: `Successfully added ${response.data.parkName} to the database!`,
         type: 'success'
       });
 
       // Reset form
       setFormData({
-        ParkName: '',
+        parkName: '',
         ParkStatus: 'Active',
-        LocationLatitude: '',
-        LocationLongitude: '',
+        locationLatitude: '',
+        locationLongitude: '',
         ParkAddress: '',
         DifficultyOpinion: 'Intermediate',
         HasLighting: false,
@@ -214,315 +160,165 @@ const SkateparkForm = () => {
     }
   };
 
-  // Group features by category for better organization
-  const groupedFeatures = availableFeatures.reduce((acc, feature) => {
-    const category = feature.FeatureCategory || 'Other';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(feature);
-    return acc;
-  }, {});
-
   return (
-    <div className="skatepark-form-container">
-      <h2>Add New Skatepark</h2>
+    <Form className={'container-sm m-8 p-lg-5'} onSubmit={handleSubmit}>
+      <FormText>Basic Information</FormText>
+      <FormLabel htmlFor="parkName">Skatepark Name *</FormLabel>
+      <Form.Control
+        className={'mb-4'}
+        as={'input'}
+        id="parkName"
+        name="parkName"
+        value={formData.parkName}
+        onChange={handleChange}
+      />
+      <FormLabel 
+        htmlFor="ParkDescription">
+        Description *
+      </FormLabel>
+      <Form.Control
 
-      {message.text && (
-        <div className={`meskatepark-form-containere.type}`}>
-          {message.text}
-        </div>
+        className={'mb-4'}
+        type={'textarea'}
+        id="ParkDescription"
+        name="ParkDescription"
+        value={formData.ParkDescription}
+        onChange={handleChange}
+        required
+        rows="2"
+      />
+
+      <Form.Label htmlFor="DifficultyOpinion">Difficulty Level</Form.Label>
+      <Form.Select
+        className={'mb-4'}
+        type={'select'}
+        id="DifficultyOpinion"
+        name="DifficultyOpinion"
+        value={formData.DifficultyOpinion}
+        onChange={handleChange}
+      >
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Advanced">Advanced</option>
+        <option value="All-Levels">All Levels</option>
+      </Form.Select>
+      <FormLabel
+        className={'mb-4'}
+        htmlFor="parkStatus">Status</FormLabel>
+      <Form.Select
+        className={'mb-4'}
+        type={'select'}
+        id="parkStatus"
+        name="parkStatus"
+        value={formData.parkStatus}
+        onChange={handleChange}
+      >
+        <option value="Active">Active</option>
+        <option value="Under Construction">Under Construction</option>
+        <option value="Closed">Closed</option>
+        <option value="Temporarily Closed">Temporarily Closed</option>
+      </Form.Select>
+      <Form.Label
+        className={'mb-2'}
+        htmlFor="akAddress">Address
+      </Form.Label>
+      <Form.Control
+        className={'mb-4'}
+        as={'input'}
+        id="ParkAddress"
+        name="ParkAddress"
+        value={formData.ParkAddress}
+        onChange={handleChange}
+      />
+      <Form.Label htmlFor="locationLatitude">Latitude *</Form.Label>
+      <Form.Control
+        className={'mb-4'}
+        as={'input'}
+        id="locationLatitude"
+        name="locationLatitude"
+        value={formData.locationLatitude}
+        onChange={handleChange}
+        required
+        placeholder="40.7608"
+      />
+      <FormLabel htmlFor="locationLongitude">Longitude *</FormLabel>
+      <Form.Control
+        className={'mb-4'}
+        as={'input'}
+        id="locationLongitude"
+        name="locationLongitude"
+        value={formData.locationLongitude}
+        onChange={handleChange}
+        required
+        placeholder="-111.8910"
+      />
+      <FormLabel htmlFor="ParkWebsite">Website (Optional)</FormLabel>
+      <Form.Control
+        className={'mb-4'}
+        as={'url'}
+        type="url"
+        id="ParkWebsite"
+        name="ParkWebsite"
+        value={formData.ParkWebsite}
+        onChange={handleChange}
+        placeholder="https://example.com"
+      />
+      
+      <FormText className={'mb-2'}>Hours of Operation</FormText>
+      <FormLabel htmlFor="Opens">Opens At</FormLabel>
+      <Form.Control
+        className={'mb-4'}
+        as={'date'}
+        type="time"
+        id="Opens"
+        name="Opens"
+        value={formData.Opens}
+        onChange={handleChange}
+      />
+      <FormLabel htmlFor="Closes">Closes At</FormLabel>
+      {formData.isVariableClosing ? (
+        <Form.Select
+          className={'mb-4'}
+          type={'select'}
+          id="Closes"
+          name="Closes"
+          value={formData.Closes}
+          onChange={handleChange}
+        >
+          <option value="Dusk">Dusk</option>
+          <option value="Sunset">Sunset</option>
+        </Form.Select>
+      ) : (
+        <Form.Control
+          className={'mb-4'}
+          type={'time'}
+          id="Closes"
+          name="Closes"
+          value={formData.Closes}
+          onChange={handleChange}
+        />
       )}
+      <Form.Control
+        className={'mb-4'}
+        type={'checkbox'}
+        id="isVariableClosing"
+        name="isVariableClosing"
+        checked={formData.isVariableClosing}
+        onChange={handleVariableClosingChange}
+      />
+      <Form.Label htmlFor="isVariableClosing">Variable Closing Time (Dusk/Sunset)</Form.Label>
+      <Form.Control
+        className={'mb-4'}
+        type={'checkbox'}
+        checked={formData.HasLighting}
+        onChange={handleChange}
+      />
+      <Form.Label htmlFor="HasLighting">Has Lights for Night Skating</Form.Label>
+      <Button className={'mb-4'} type="submit" disabled={loading}>
+        {loading ? 'Submitting...' : 'Add Skatepark'}
+      </Button>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <h3>Basic Information</h3>
-
-          <div>
-            <label htmlFor="ParkName">Skatepark Name *</label>
-            <input
-              type="text"
-              id="ParkName"
-              name="ParkName"
-              value={formData.ParkName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="ParkDescription">Description *</label>
-            <textarea
-              id="ParkDescription"
-              name="ParkDescription"
-              value={formData.ParkDescription}
-              onChange={handleChange}
-              required
-              rows="4"
-            />
-          </div>
-
-          <div>
-            <div>
-              <label htmlFor="DifficultyOpinion">Difficulty Level</label>
-              <select
-                id="DifficultyOpinion"
-                name="DifficultyOpinion"
-                value={formData.DifficultyOpinion}
-                onChange={handleChange}
-              >
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-                <option value="All-Levels">All Levels</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="ParkStatus">Status</label>
-              <select
-                id="ParkStatus"
-                name="ParkStatus"
-                value={formData.ParkStatus}
-                onChange={handleChange}
-              >
-                <option value="Active">Active</option>
-                <option value="Under Construction">Under Construction</option>
-                <option value="Closed">Closed</option>
-                <option value="Temporarily Closed">Temporarily Closed</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3>Location</h3>
-
-          <div>
-            <label htmlFor="ParkAddress">Address</label>
-            <input
-              type="text"
-              id="ParkAddress"
-              name="ParkAddress"
-              value={formData.ParkAddress}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="LocationLatitude">Latitude *</label>
-              <input
-                type="text"
-                id="LocationLatitude"
-                name="LocationLatitude"
-                value={formData.LocationLatitude}
-                onChange={handleChange}
-                required
-                placeholder="40.7608"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="LocationLongitude">Longitude *</label>
-              <input
-                type="text"
-                id="LocationLongitude"
-                name="LocationLongitude"
-                value={formData.LocationLongitude}
-                onChange={handleChange}
-                required
-                placeholder="-111.8910"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="ParkWebsite">Website (Optional)</label>
-            <input
-              type="url"
-              id="ParkWebsite"
-              name="ParkWebsite"
-              value={formData.ParkWebsite}
-              onChange={handleChange}
-              placeholder="https://example.com"
-            />
-          </div>
-        </div>
-
-        <div>
-          <h3>Features</h3>
-
-          {Object.entries(groupedFeatures).map(([category, features]) => (
-            <div key={category}>
-              <h4>{category}</h4>
-              <div>
-                {features.map(feature => (
-                  <div key={feature.Id}>
-                    <input
-                      type="checkbox"
-                      id={`feature-${feature.Id}`}
-                      checked={formData.SelectedFeatures.includes(feature.Id)}
-                      onChange={() => toggleFeature(feature.Id)}
-                    />
-                    <label htmlFor={`feature-${feature.Id}`}>
-                      {feature.FeatureName}
-                      {feature.FeatureType && ` (${feature.FeatureType})`}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          <div>
-            {showNewFeatureForm ? (
-              <div>
-                <h4>Add New Feature</h4>
-                <div>
-                  <div>
-                    <label htmlFor="FeatureName">Feature Name *</label>
-                    <input
-                      type="text"
-                      id="FeatureName"
-                      name="FeatureName"
-                      value={newFeature.FeatureName}
-                      onChange={handleNewFeatureChange}
-                      required
-                    />
-                  </div>
-
-                  <div >
-                    <label htmlFor="FeatureType">Feature Type</label>
-                    <select
-                      id="FeatureType"
-                      name="FeatureType"
-                      value={newFeature.FeatureType}
-                      onChange={handleNewFeatureChange}
-                    >
-                      <option value="Obstacle">Obstacle</option>
-                      <option value="Ramp">Ramp</option>
-                      <option value="Rail">Rail</option>
-                      <option value="Bowl">Bowl</option>
-                      <option value="Pool">Pool</option>
-                      <option value="Amenity">Amenity</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="FeatureCategory">Category</label>
-                    <select
-                      id="FeatureCategory"
-                      name="FeatureCategory"
-                      value={newFeature.FeatureCategory}
-                      onChange={handleNewFeatureChange}
-                    >
-                      <option value="Street">Street</option>
-                      <option value="Vert">Vert</option>
-                      <option value="Transition">Transition</option>
-                      <option value="Facility">Facility</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <button
-                    type="button"
-                    onClick={addNewFeature}
-                    disabled={loading || !newFeature.FeatureName.trim()}
-                  >
-                    {loading ? 'Adding...' : 'Add Feature'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewFeatureForm(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowNewFeatureForm(true)}
-              >
-                + Add New Feature
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div >
-          <h3>Hours of Operation</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="Opens">Opens At</label>
-              <input
-                type="time"
-                id="Opens"
-                name="Opens"
-                value={formData.Opens}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="Closes">Closes At</label>
-              {formData.isVariableClosing ? (
-                <select
-                  id="Closes"
-                  name="Closes"
-                  value={formData.Closes}
-                  onChange={handleChange}
-                >
-                  <option value="Dusk">Dusk</option>
-                  <option value="Sunset">Sunset</option>
-                </select>
-              ) : (
-                <input
-                  type="time"
-                  id="Closes"
-                  name="Closes"
-                  value={formData.Closes}
-                  onChange={handleChange}
-                />
-              )}
-            </div>
-          </div>
-
-          <div>
-            <input
-              type="checkbox"
-              id="isVariableClosing"
-              name="isVariableClosing"
-              checked={formData.isVariableClosing}
-              onChange={handleVariableClosingChange}
-            />
-            <label htmlFor="isVariableClosing">Variable Closing Time (Dusk/Sunset)</label>
-          </div>
-
-          <div>
-            <input
-              type="checkbox"
-              id="HasLighting"
-              name="HasLighting"
-              checked={formData.HasLighting}
-              onChange={handleChange}
-            />
-            <label htmlFor="HasLighting">Has Lights for Night Skating</label>
-          </div>
-        </div>
-
-        <div className="form-actions">
-          <button type="submit" disabled={loading}>
-            {loading ? 'Submitting...' : 'Add Skatepark'}
-          </button>
-        </div>
-      </form>
-    </div>
+    </Form>
   );
 };
 

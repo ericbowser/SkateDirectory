@@ -4,6 +4,9 @@ import App from './App.js';
 import { createBrowserRouter, RouterProvider } from "react-router";
 import ParksList from "./components/ParksList";
 import SkateParkForm from "./components/SkateParkForm";
+import Map from "./components/Map";
+import Features from "./components/Features";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 let router = createBrowserRouter([
   {
@@ -15,8 +18,16 @@ let router = createBrowserRouter([
     Component: ParksList
   },
   {
-    path: "/skateparkform",
+    path: "/addpark",
     Component: SkateParkForm
+  },
+  {
+    path: "/map",
+    Component: Map
+  },
+  {
+    path: "/features",
+    Component: Features
   },
 ]);
 
