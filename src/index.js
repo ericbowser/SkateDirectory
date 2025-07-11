@@ -4,6 +4,7 @@ import App from './App.js';
 import { createBrowserRouter, RouterProvider } from "react-router";
 import ParksList from "./components/ParksList";
 import SkateParkForm from "./components/SkateParkForm";
+import './styles/output.css';
 
 let router = createBrowserRouter([
   {

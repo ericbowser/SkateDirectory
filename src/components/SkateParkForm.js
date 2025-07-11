@@ -229,7 +229,7 @@ const SkateparkForm = () => {
       <h2>Add New Skatepark</h2>
 
       {message.text && (
-        <div className={`meskatepark-form-containere.type}`}>
+        <div>
           {message.text}
         </div>
       )}

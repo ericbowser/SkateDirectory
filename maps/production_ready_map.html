@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Salt Lake City Skateparks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+    }
+    
+    #map {
+      height: 70vh;
+      min-height: 400px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .map-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .header h1 {
+      color: #2c3e50;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      color: #7f8c8d;
+      font-size: 1.1rem;
+    }
+    
+    .filters {
+      margin-bottom: 25px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .filters button {
+      padding: 12px 20px;
+      background: #ffffff;
+      color: #2c3e50;
+      border: 2px solid #e1e8ed;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .filters button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      border-color: #3498db;
+    }
+    
+    .filters button.active {
+      background: #3498db;
+      color: white;
+      border-color: #3498db;
+      transform: translateY(-2px);
+    }
+    
+    .park-info {
+      max-width: 320px;
+      font-family: inherit;
+    }
+    
+    .park-info h3 {
+      margin: 0 0 12px 0;
+      color: #2c3e50;
+      font-size: 1.3rem;
+    }
+    
+    .park-info p {
+      margin: 8px 0;
+      line-height: 1.5;
+      color: #5a6c7d;
+    }
+    
+    .difficulty-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .beginner { background: #27ae60; color: white; }
+    .intermediate { background: #f39c12; color: white; }
+    .advanced { background: #e74c3c; color: white; }
+    
+    .detail-btn {
+      margin-top: 15px;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    
+    .detail-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+    
+    .error-message {
+      background: #fee;
+      border: 1px solid #fcc;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+      color: #c33;
+      text-align: center;
+    }
+    
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .filters {
+        gap: 8px;
+      }
+      
+      .filters button {
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+      
+      #map {
+        height: 60vh;
+        border-radius: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="map-container">
+    <div class="header">
+      <h1>🛹 Salt Lake City Skateparks</h1>
+      <p>Discover the best skateparks in the city</p>
+    </div>
+    
+    <div class="filters">
+      <button onclick="filterParks('all')" class="active" id="all-btn">All Parks</button>
+      <button onclick="filterParks('beginner')" id="beginner-btn">Beginner</button>
+      <button onclick="filterParks('intermediate')" id="intermediate-btn">Intermediate</button>
+      <button onclick="filterParks('advanced')" id="advanced-btn">Advanced</button>
+      <button onclick="filterParks('indoor')" id="indoor-btn">Indoor</button>
+    </div>
+    
+    <div id="map"></div>
+    <div id="error-container"></div>
+  </div>
+
+  <script>
+    // Configuration - UPDATE THESE VALUES
+    const CONFIG = {
+      // Get this from Google Cloud Console after creating your map style
+      MAP_ID: null, // Set to your map ID string, e.g., "abc123def456"
+      
+      // Your Google Maps API key
+      API_KEY: "YOUR_API_KEY_HERE",
+      
+      // Map center and zoom
+      center: { lat: 40.7608, lng: -111.8910 },
+      zoom: 12,
+      
+      // Custom styling (fallback if no MAP_ID)
+      customStyles: [
+        {
+          "featureType": "poi.park",
+          "elementType": "geometry.fill",
+          "stylers": [{"color": "#4CAF50"}, {"lightness": 15}]
+        },
+        {
+          "featureType": "poi.sports_complex",
+          "elementType": "all",
+          "stylers": [{"visibility": "on"}, {"color": "#FF5722"}]
+        },
+        {
+          "featureType": "road",
+          "elementType": "geometry",
+          "stylers": [{"color": "#757575"}, {"lightness": 20}]
+        },
+        {
+          "featureType": "water",
+          "elementType": "geometry.fill",
+          "stylers": [{"color": "#2196F3"}]
+        },
+        {
+          "featureType": "landscape",
+          "elementType": "geometry.fill",
+          "stylers": [{"color": "#f5f5f5"}]
+        }
+      ]
+    };
+
+    const skateparks = [
+      {
+        id: "fairmont",
+        name: "Fairmont Skatepark",
+        position: { lat: 40.7365, lng: -111.8762 },
+        description: "Bowl-style park with multiple lines and street features. Great for flow and carved transitions.",
+        difficulty: "intermediate",
+        type: "outdoor",
+        features: ["bowl", "street", "vert", "transitions"]
+      },
+      {
+        id: "jordan",
+        name: "Jordan Park Skatepark",
+        position: { lat: 40.7408, lng: -111.9214 },
+        description: "Perfect for beginners with small ramps, rails, and forgiving obstacles.",
+        difficulty: "beginner",
+        type: "outdoor",
+        features: ["mini-ramp", "rails", "ledges", "beginner-friendly"]
+      },
+      {
+        id: "ninth",
+        name: "9th & 9th Skatepark",
+        position: { lat: 40.7491, lng: -111.8655 },
+        description: "Technical street-style park with challenging ledges, stairs, and rail combinations.",
+        difficulty: "advanced",
+        type: "outdoor",
+        features: ["street", "stairs", "ledges", "rails", "technical"]
+      },
+      {
+        id: "shred",
+        name: "Shred Shed Indoor Park",
+        position: { lat: 40.7613, lng: -111.8920 },
+        description: "Premium indoor facility with foam pit, mega ramp, and climate-controlled environment.",
+        difficulty: "advanced",
+        type: "indoor",
+        features: ["foam-pit", "mega-ramp", "bowl", "indoor", "all-weather"]
+      }
+    ];
+
+    let map;
+    let markers = [];
+    let currentFilter = 'all';
+
+    function showError(message) {
+      const errorContainer = document.getElementById('error-container');
+      errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+    }
+
+    function initMap() {
+      try {
+        const mapOptions = {
+          center: CONFIG.center,
+          zoom: CONFIG.zoom,
+          disableDefaultUI: false,
+          zoomControl: true,
+          mapTypeControl: false,
+          streetViewControl: true,
+          fullscreenControl: true,
+          gestureHandling: 'cooperative'
+        };
+
+        // Use custom map ID if available, otherwise use inline styles
+        if (CONFIG.MAP_ID) {
+          mapOptions.mapId = CONFIG.MAP_ID;
+          console.log('Using custom map style ID:', CONFIG.MAP_ID);
+        } else {
+          mapOptions.styles = CONFIG.customStyles;
+          console.log('Using inline custom styles');
+        }
+
+        map = new google.maps.Map(document.getElementById("map"), mapOptions);
+        
+        // Add all markers initially
+        addMarkers('all');
+        
+        console.log('Map initialized successfully');
+      } catch (error) {
+        console.error('Error initializing map:', error);
+        showError('Failed to load map. Please check your API key and internet connection.');
+      }
+    }
+
+    function getMarkerIcon(difficulty) {
+      const colors = {
+        beginner: '#27ae60',
+        intermediate: '#f39c12', 
+        advanced: '#e74c3c'
+      };
+      
+      return {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 12,
+        fillColor: colors[difficulty] || '#3498db',
+        fillOpacity: 0.9,
+        strokeWeight: 3,
+        strokeColor: '#ffffff'
+      };
+    }
+
+    function addMarkers(filter) {
+      // Clear existing markers
+      markers.forEach(marker => marker.setMap(null));
+      markers = [];
+      
+      // Update active button
+      updateActiveButton(filter);
+      
+      // Filter parks
+      const filteredParks = skateparks.filter(park => {
+        if (filter === 'all') return true;
+        if (filter === 'beginner') return park.difficulty === 'beginner';
+        if (filter === 'intermediate') return park.difficulty === 'intermediate';
+        if (filter === 'advanced') return park.difficulty === 'advanced';
+        if (filter === 'indoor') return park.type === 'indoor';
+        return true;
+      });
+      
+      // Add markers
+      filteredParks.forEach(park => {
+        const marker = new google.maps.Marker({
+          position: park.position,
+          map: map,
+          title: park.name,
+          icon: getMarkerIcon(park.difficulty),
+          animation: google.maps.Animation.DROP
+        });
+        
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div class="park-info">
+              <h3>${park.name}</h3>
+              <p>${park.description}</p>
+              <p><span class="difficulty-badge ${park.difficulty}">${park.difficulty}</span></p>
+              <p><strong>Type:</strong> ${park.type}</p>
+              <p><strong>Features:</strong> ${park.features.join(', ')}</p>
+              <button class="detail-btn" onclick="showParkDetails('${park.id}')">
+                View Details →
+              </button>
+            </div>
+          `
+        });
+        
+        marker.addListener("click", () => {
+          // Close any open info windows
+          markers.forEach(m => {
+            if (m.infoWindow) m.infoWindow.close();
+          });
+          infoWindow.open(map, marker);
+        });
+        
+        marker.infoWindow = infoWindow;
+        markers.push(marker);
+      });
+      
+      console.log(`Added ${filteredParks.length} markers for filter: ${filter}`);
+    }
+
+    function updateActiveButton(filter) {
+      document.querySelectorAll('.filters button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      const button = document.getElementById(`${filter}-btn`);
+      if (button) {
+        button.classList.add('active');
+      }
+      currentFilter = filter;
+    }
+
+    function filterParks(filter) {
+      addMarkers(filter);
+    }
+
+    function focusOnPark(parkId) {
+      const park = skateparks.find(p => p.id === parkId);
+      if (park) {
+        map.setCenter(park.position);
+        map.setZoom(16);
+        
+        const marker = markers.find(m => m.getTitle() === park.name);
+        if (marker) {
+          setTimeout(() => {
+            google.maps.event.trigger(marker, 'click');
+          }, 500);
+        }
+      }
+    }
+
+    function showParkDetails(parkId) {
+      console.log(`Showing details for park: ${parkId}`);
+      // For now, focus on the park - later you can route to detail page
+      focusOnPark(parkId);
+      
+      // Example: You could also open a modal or navigate to /parks/{parkId}
+      // window.location.href = `/parks/${parkId}`;
+    }
+
+    // Error handling for failed API loads
+    window.gm_authFailure = function() {
+      showError('Google Maps authentication failed. Please check your API key.');
+    };
+
+    // Make functions available globally
+    window.initMap = initMap;
+    window.filterParks = filterParks;
+    window.focusOnPark = focusOnPark;
+    window.showParkDetails = showParkDetails;
+  </script>
+  
+  <!-- 
+    IMPORTANT: Replace YOUR_API_KEY_HERE with your actual Google Maps API key
+    Get your API key from: https://console.cloud.google.com/apis/credentials
+  -->
+  <script async defer 
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=initMap"
+    onerror="document.getElementById('error-container').innerHTML='<div class=error-message>Failed to load Google Maps. Please check your internet connection.</div>'">
+  </script>
+</body>
+</html>
