@@ -15,7 +15,7 @@ const ParksList = () => {
   const fetchParks = async () => {
     setLoading(true);
     try {
-      const response = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
+      const response = await FetchData('https://localhost:44397/skatedirectory/api/getparks');
       setParks(response);
       setFilteredParks(response);
       setLoading(false);

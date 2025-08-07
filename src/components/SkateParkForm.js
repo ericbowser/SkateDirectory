@@ -2,9 +2,8 @@
 import {FetchData, PostData} from "../../api/http";
 import FormControl from "react-bootstrap/FormControl";
 import Form from "react-bootstrap/Form";
-import FormLabel from "react-bootstrap/FormLabel";
-import {Button, FormText} from "react-bootstrap";
-
+import Button from "react-bootstrap/Button";
+import FormText from "react-bootstrap/FormText";
 
 const SkateparkForm = () => {
   const [formData, setFormData] = useState({
@@ -161,9 +160,9 @@ const SkateparkForm = () => {
   };
 
   return (
-    <Form className={'container-sm m-8 p-lg-5'} onSubmit={handleSubmit}>
+    <FormControl className={'container-sm m-8 p-lg-5'} onSubmit={handleSubmit}>
       <FormText>Basic Information</FormText>
-      <FormLabel htmlFor="parkName">Skatepark Name *</FormLabel>
+      <FormControl type={'label'} htmlFor="parkName">Skatepark Name *</FormControl>
       <Form.Control
         className={'mb-4'}
         as={'input'}
@@ -172,10 +171,11 @@ const SkateparkForm = () => {
         value={formData.parkName}
         onChange={handleChange}
       />
-      <FormLabel 
+      <FormControl
+        type={'label'}
         htmlFor="ParkDescription">
         Description *
-      </FormLabel>
+      </FormControl>
       <Form.Control
 
         className={'mb-4'}
@@ -188,7 +188,7 @@ const SkateparkForm = () => {
         rows="2"
       />
 
-      <Form.Label htmlFor="DifficultyOpinion">Difficulty Level</Form.Label>
+      <FormControl type={'label'} htmlFor="DifficultyOpinion">Difficulty Level</FormControl>
       <Form.Select
         className={'mb-4'}
         type={'select'}
@@ -202,9 +202,10 @@ const SkateparkForm = () => {
         <option value="Advanced">Advanced</option>
         <option value="All-Levels">All Levels</option>
       </Form.Select>
-      <FormLabel
+      <FormControl
+        type={'label'}
         className={'mb-4'}
-        htmlFor="parkStatus">Status</FormLabel>
+        htmlFor="parkStatus">Status</FormControl>
       <Form.Select
         className={'mb-4'}
         type={'select'}
@@ -218,10 +219,11 @@ const SkateparkForm = () => {
         <option value="Closed">Closed</option>
         <option value="Temporarily Closed">Temporarily Closed</option>
       </Form.Select>
-      <Form.Label
+      <FormControl
+        type={'label'}
         className={'mb-2'}
         htmlFor="akAddress">Address
-      </Form.Label>
+      </FormControl>
       <Form.Control
         className={'mb-4'}
         as={'input'}
@@ -230,7 +232,7 @@ const SkateparkForm = () => {
         value={formData.ParkAddress}
         onChange={handleChange}
       />
-      <Form.Label htmlFor="locationLatitude">Latitude *</Form.Label>
+      <FormControl type={'label'} htmlFor="locationLatitude">Latitude *</FormControl>
       <Form.Control
         className={'mb-4'}
         as={'input'}
@@ -241,7 +243,7 @@ const SkateparkForm = () => {
         required
         placeholder="40.7608"
       />
-      <FormLabel htmlFor="locationLongitude">Longitude *</FormLabel>
+      <FormControl type={'label'} htmlFor="locationLongitude">Longitude *</FormControl>
       <Form.Control
         className={'mb-4'}
         as={'input'}
@@ -252,10 +254,9 @@ const SkateparkForm = () => {
         required
         placeholder="-111.8910"
       />
-      <FormLabel htmlFor="ParkWebsite">Website (Optional)</FormLabel>
+      <FormControl type={'label'} htmlFor="ParkWebsite">Website (Optional)</FormControl>
       <Form.Control
         className={'mb-4'}
-        as={'url'}
         type="url"
         id="ParkWebsite"
         name="ParkWebsite"
@@ -263,19 +264,18 @@ const SkateparkForm = () => {
         onChange={handleChange}
         placeholder="https://example.com"
       />
-      
+
       <FormText className={'mb-2'}>Hours of Operation</FormText>
-      <FormLabel htmlFor="Opens">Opens At</FormLabel>
+      <FormControl type={'label'} htmlFor="Opens">Opens At</FormControl>
       <Form.Control
         className={'mb-4'}
-        as={'date'}
         type="time"
         id="Opens"
         name="Opens"
         value={formData.Opens}
         onChange={handleChange}
       />
-      <FormLabel htmlFor="Closes">Closes At</FormLabel>
+      <FormControl type={'label'} htmlFor="Closes">Closes At</FormControl>
       {formData.isVariableClosing ? (
         <Form.Select
           className={'mb-4'}
@@ -298,27 +298,28 @@ const SkateparkForm = () => {
           onChange={handleChange}
         />
       )}
-      <Form.Control
-        className={'mb-4'}
-        type={'checkbox'}
-        id="isVariableClosing"
-        name="isVariableClosing"
-        checked={formData.isVariableClosing}
-        onChange={handleVariableClosingChange}
-      />
-      <Form.Label htmlFor="isVariableClosing">Variable Closing Time (Dusk/Sunset)</Form.Label>
-      <Form.Control
-        className={'mb-4'}
-        type={'checkbox'}
-        checked={formData.HasLighting}
-        onChange={handleChange}
-      />
-      <Form.Label htmlFor="HasLighting">Has Lights for Night Skating</Form.Label>
-      <Button className={'mb-4'} type="submit" disabled={loading}>
-        {loading ? 'Submitting...' : 'Add Skatepark'}
-      </Button>
-
-    </Form>
+      {/*<Form.Control*/}
+      {/*  className={'mb-4'}*/}
+      {/*  type={'checkbox'}*/}
+      {/*  id="isVariableClosing"*/}
+      {/*  name="isVariableClosing"*/}
+      {/*  checked={formData.isVariableClosing}*/}
+      {/*  onChange={handleVariableClosingChange}*/}
+      {/*/>*/}
+      {/*<Form.Label htmlFor="isVariableClosing">Variable Closing Time (Dusk/Sunset)</Form.Label>*/}
+      {/*<Form.Control*/}
+      {/*  className={'mb-4'}*/}
+      {/*  type={'checkbox'}*/}
+      {/*  checked={formData.HasLighting}*/}
+      {/*  onChange={handleChange}*/}
+      {/*/>*/}
+      <FormControl type={'label'} htmlFor="HasLighting">Has Lights for Night Skating</FormControl>
+        <Button className={'mb-4'} type="submit" disabled={loading}>
+          {loading ? 'Submitting...' : 'Add Skatepark'}
+        </Button>
+    
+    </FormControl>
+    
   );
 };
 
