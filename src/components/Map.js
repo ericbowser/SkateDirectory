@@ -1,258 +1,192 @@
-﻿import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router';
-import {FetchData} from "../../api/http";
+﻿// components/Map.js
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import {
+  APIProvider,
+  Map,
+  AdvancedMarker,
+  Pin,
+  InfoWindow
+} from '@vis.gl/react-google-maps';
+import config from '../../env.json'
 
-const MapView = () => {
-  const [parks, setParks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const mapRef = useRef(null);
-  const markersRef = useRef([]);
-  const mapInstanceRef = useRef(null);
-
-  useEffect(() => {
-    // Load Google Maps API
-/*
-    const googleMapScript = document.createElement('script');
-    googleMapScript.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.GOOGLE_MAPS_API_KEY}&libraries=places`;
-    googleMapScript.async = true;
-    googleMapScript.defer = true;
-    googleMapScript.onload = () => setMapLoaded(true);
-    document.head.appendChild(googleMapScript);
-*/
-
-    // Fetch skatepark data
-    const Parks = async () => {
-      const parks = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
-      setParks(parks);
-      setLoading(false);
-    }
-    console.log('parks', Parks)
-
-  }, [loading]);
-  
-  async function fetchParks() {
-    const responseData = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`)
-    if(!responseData) {
-      setError('Failed to load skatepark data. Please try again later.')
-      return null;
-    } 
-    
-    setParks(responseData);
+// Error Boundary Component
+class MapErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
   }
 
-  // Initialize map once the script is loaded and parks are fetched
-  useEffect(() => {
-    if (mapLoaded && parks.length > 0) {
-      initializeMap();
-    }
-  }, [mapLoaded, parks]);
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
 
-  // Re-render markers when filter changes
-  useEffect(() => {
-    if (mapInstanceRef.current) {
-      filterMarkers();
-    }
-  }, [activeFilter]);
+  componentDidCatch(error, errorInfo) {
+    console.error('Map Error:', error, errorInfo);
+  }
 
-  const initializeMap = () => {
-    // Center map on Salt Lake City
-    const slc = { lat: 40.7608, lng: -111.8910 };
-
-    const mapOptions = {
-      center: slc,
-      zoom: 11,
-      mapTypeControl: true,
-      streetViewControl: true,
-      fullscreenControl: true,
-    };
-
-    // Create the map
-    const map = window.map
-    mapInstanceRef.current = map;
-
-    // Add markers for each park
-    addMarkers(map);
-  };
-
-  const addMarkers = (map) => {
-    // Clear existing markers
-    markersRef.current.forEach((marker) => marker.setMap(null));
-    markersRef.current = [];
-
-    // Create new markers
-    parks.forEach((park) => {
-      // Create marker
-      const marker = new window.google.maps.Marker({
-        position: {
-          lat: parseFloat(park.LocationLatitude),
-          lng: parseFloat(park.LocationLongitude)
-        },
-        map: map,
-        title: park.ParkName,
-        icon: getMarkerIcon(park.DifficultyOpinion),
-        visible: shouldShowMarker(park)
-      });
-
-      // Create info window content
-      const infoWindowContent = `
-        <div class="info-window">
-          <h3>${park.ParkName}</h3>
-          <p>${park.ParkDescription.substring(0, 100)}${park.ParkDescription.length > 100 ? '...' : ''}</p>
-          <p><strong>Difficulty:</strong> ${park.DifficultyOpinion}</p>
-          <p><strong>Hours:</strong> ${park.Opens} - ${park.Closes}</p>
-          <a href="/parks/${park.Id}" class="view-details">View Details</a>
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="map-error">
+          <h3>Map Loading Error</h3>
+          <p>Unable to load the map. Please refresh the page.</p>
+          <button onClick={() => window.location.reload()}>
+            Refresh Page
+          </button>
         </div>
-      `;
-
-      // Create info window
-      const infoWindow = new window.google.maps.InfoWindow({
-        content: infoWindowContent
-      });
-
-      // Add click listener to marker
-      marker.addListener('click', () => {
-        infoWindow.open(map, marker);
-      });
-
-      // Store marker for later reference
-      markersRef.current.push(marker);
-    });
-  };
-
-  const filterMarkers = () => {
-    markersRef.current.forEach((marker, index) => {
-      marker.setVisible(shouldShowMarker(parks[index]));
-    });
-  };
-
-  const shouldShowMarker = (park) => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'beginner') return park.DifficultyOpinion === 'Beginner';
-    if (activeFilter === 'intermediate') return park.DifficultyOpinion === 'Intermediate';
-    if (activeFilter === 'advanced') return park.DifficultyOpinion === 'Advanced';
-    if (activeFilter === 'lighted') return park.HasLighting;
-    return true;
-  };
-
-  const getMarkerIcon = (difficulty) => {
-    // Different colored markers based on difficulty
-    switch(difficulty) {
-      case 'Beginner':
-        return 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
-      case 'Intermediate':
-        return 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
-      case 'Advanced':
-        return 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
-      default:
-        return 'http://maps.google.com/mapfiles/ms/icons/purple-dot.png';
+      );
     }
-  };
-
-  const handleFilterChange = (filter) => {
-    setActiveFilter(filter);
-  };
-
-  if (loading) {
-    return <div className="loading">Loading skatepark data...</div>;
+    return this.props.children;
   }
+}
 
-  if (error) {
-    return <div className="error">{error}</div>;
+// Loading Component
+const MapLoadingState = () => (
+  <div className="map-loading">
+    <div className="loading-spinner"></div>
+    <p>Loading skate parks...</p>
+  </div>
+);
+
+// Main Map Component
+const SkateParksMap = ({
+                         center = { lat: 40.7128, lng: -74.0060 },
+                         zoom = 11,
+                         skateparks = [],
+                         onParkSelect
+                       }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+  const [selectedPark, setSelectedPark] = useState(null);
+  const [infoWindowOpen, setInfoWindowOpen] = useState(false);
+
+  const handleApiLoad = useCallback(() => {
+    setIsLoaded(true);
+    console.log('Maps API loaded successfully');
+  }, []);
+
+  const handleApiError = useCallback((error) => {
+    setLoadError(error);
+    console.error('Maps API failed to load:', error);
+  }, []);
+
+  const handleMarkerClick = useCallback((park) => {
+    setSelectedPark(park);
+    setInfoWindowOpen(true);
+    onParkSelect?.(park);
+  }, [onParkSelect]);
+
+  const handleInfoWindowClose = useCallback(() => {
+    setInfoWindowOpen(false);
+    setSelectedPark(null);
+  }, []);
+
+  // Create markers with custom styling based on difficulty
+  const markers = useMemo(() => {
+    return skateparks.map(park => ({
+      key: `park-${park.Id || park.id}`,
+      position: {
+        lat: park.LocationLatitude,
+        lng: park.LocationLongitude
+      },
+      park,
+      difficulty: park.DifficultyOpinion
+    }));
+  }, [skateparks]);
+
+  if (loadError) {
+    return (
+      <div className="map-error">
+        <p>Failed to load Google Maps: {loadError.message}</p>
+      </div>
+    );
   }
 
   return (
-    <div className="map-view">
-      <h2 className="text-2xl font-bold mb-4">Salt Lake City Skateparks</h2>
-      <button id='fetchParks' onClick={fetchParks}>Fetch Parks</button>
-      <div className="filters mb-4">
-        <div className="flex flex-wrap gap-2">
-          <button
-            className={`px-4 py-2 rounded ${activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            onClick={() => handleFilterChange('all')}
-          >
-            All Parks
-          </button>
-          <button
-            className={`px-4 py-2 rounded ${activeFilter === 'beginner' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-            onClick={() => handleFilterChange('beginner')}
-          >
-            Beginner Friendly
-          </button>
-          <button
-            className={`px-4 py-2 rounded ${activeFilter === 'intermediate' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            onClick={() => handleFilterChange('intermediate')}
-          >
-            Intermediate
-          </button>
-          <button
-            className={`px-4 py-2 rounded ${activeFilter === 'advanced' ? 'bg-red-600 text-white' : 'bg-gray-200'}`}
-            onClick={() => handleFilterChange('advanced')}
-          >
-            Advanced
-          </button>
-          <button
-            className={`px-4 py-2 rounded ${activeFilter === 'lighted' ? 'bg-yellow-600 text-white' : 'bg-gray-200'}`}
-            onClick={() => handleFilterChange('lighted')}
-          >
-            Night Lighting
-          </button>
-        </div>
-      </div>
-
-      <div
-        ref={mapRef}
-        className="h-[600px] w-full rounded-lg shadow-lg border border-gray-300"
-      />
-
-      <div className="mt-4 bg-gray-100 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2">Legend</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="flex items-center">
-            <img src="http://maps.google.com/mapfiles/ms/icons/green-dot.png" alt="Green marker" className="mr-2" />
-            <span>Beginner Friendly</span>
-          </div>
-          <div className="flex items-center">
-            <img src="http://maps.google.com/mapfiles/ms/icons/blue-dot.png" alt="Blue marker" className="mr-2" />
-            <span>Intermediate</span>
-          </div>
-          <div className="flex items-center">
-            <img src="http://maps.google.com/mapfiles/ms/icons/red-dot.png" alt="Red marker" className="mr-2" />
-            <span>Advanced</span>
-          </div>
-          <div className="flex items-center">
-            <img src="http://maps.google.com/mapfiles/ms/icons/purple-dot.png" alt="Purple marker" className="mr-2" />
-            <span>All Levels</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <h3 className="text-xl font-bold mb-4">Park List</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {parks.filter(park => shouldShowMarker(park)).map(park => (
-            <div key={park.Id} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-              <h4 className="text-lg font-semibold">{park.ParkName}</h4>
-              <p className="text-gray-600 my-2">{park.ParkDescription.substring(0, 100)}...</p>
-              <div className="flex justify-between items-center mt-4">
-                <span className={`px-2 py-1 rounded text-xs ${
-                  park.DifficultyOpinion === 'Beginner' ? 'bg-green-100 text-green-800' :
-                    park.DifficultyOpinion === 'Intermediate' ? 'bg-blue-100 text-blue-800' :
-                      park.DifficultyOpinion === 'Advanced' ? 'bg-red-100 text-red-800' :
-                        'bg-purple-100 text-purple-800'
-                }`}>
-                  {park.DifficultyOpinion}
-                </span>
-                <Link to={`/parks/${park.Id}`} className="text-blue-600 hover:underline">View Details</Link>
-              </div>
-            </div>
+    <MapErrorBoundary>
+      <APIProvider
+        apiKey={config.GOOGLE_MAPS_JS_KEY}
+        onLoad={handleApiLoad}
+        onError={handleApiError}
+      >
+        {!isLoaded && <MapLoadingState />}
+        <Map
+          mapId="2f0f02dd437a53e8f6d66376"  // Your custom Map ID
+          defaultCenter={center}
+          defaultZoom={zoom}
+          style={{ width: '100%', height: '500px' }}
+          options={{
+            gestureHandling: 'greedy',
+            zoomControl: true,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            disableDefaultUI: false
+          }}
+        >
+          {markers.map(({ key, position, park, difficulty }) => (
+            <AdvancedMarker
+              key={key}
+              position={position}
+              onClick={() => handleMarkerClick(park)}
+              title={`${park.ParkName} (${difficulty})`}
+            >
+              <DifficultyPin difficulty={difficulty} />
+            </AdvancedMarker>
           ))}
-        </div>
-      </div>
-    </div>
+
+          {infoWindowOpen && selectedPark && (
+            <InfoWindow
+              position={{
+                lat: selectedPark.LocationLatitude,
+                lng: selectedPark.LocationLongitude
+              }}
+              onCloseClick={handleInfoWindowClose}
+            >
+              <ParkInfoContent park={selectedPark} />
+            </InfoWindow>
+          )}
+        </Map>
+      </APIProvider>
+    </MapErrorBoundary>
   );
 };
 
-export default MapView;
+// Custom Pin Component for Different Difficulties
+const DifficultyPin = ({ difficulty }) => {
+  const difficultyConfig = {
+    'Beginner': { background: '#4CAF50', glyph: '🟢' },
+    'Intermediate': { background: '#FF9800', glyph: '🟡' },
+    'Advanced': { background: '#F44336', glyph: '🔴' },
+    'Expert': { background: '#9C27B0', glyph: '🟣' }
+  };
+
+  const config = difficultyConfig[difficulty] || difficultyConfig['Beginner'];
+
+  return (
+    <Pin
+      background={config.background}
+      borderColor="#FFFFFF"
+      glyphColor="#FFFFFF"
+      glyph={config.glyph}
+      scale={1.2}
+    />
+  );
+};
+
+// Info Window Content Component
+const ParkInfoContent = ({ park }) => (
+  <div className="park-info-window">
+    <h3>{park.ParkName}</h3>
+    <p><strong>Address:</strong> {park.ParkAddress}</p>
+    <p><strong>Difficulty:</strong> {park.DifficultyOpinion}</p>
+    {park.Description && <p>{park.Description}</p>}
+    <div className="info-actions">
+      <button onClick={() => window.open(`https://maps.google.com/dir/?api=1&destination=${park.LocationLatitude},${park.LocationLongitude}`)}>
+        Get Directions
+      </button>
+    </div>
+  </div>
+);
+
+export default SkateParksMap;

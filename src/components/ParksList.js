@@ -26,22 +26,22 @@ const ParksList = () => {
     { field: "closes", headerName: "Closes", sortable: true, flex: 0.5 },
     { field: "parkWebsite", headerName: "Website", flex: 1, cellRenderer: WebsiteLinkRenderer },
   ]);
-
+  
+  const fetchParks = async () => {
+    setLoading(true);
+    try {
+      const response = await FetchData(`${config.BASE_URL}${config.REL_GET_PARK}`);
+      setParks(response);
+    } catch (err) {
+      setError('Failed to load skatepark data. Please try again later.');
+      console.error('Error fetching skateparks:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    const fetchParks = async () => {
-      setLoading(true);
-      try {
-        const response = await FetchData(`${config.BASE_URL}${config.REL_GET_PARK}`);
-        setParks(response);
-      } catch (err) {
-        setError('Failed to load skatepark data. Please try again later.');
-        console.error('Error fetching skateparks:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchParks();
+    fetchParks().then(r => console.log(r));
   }, []);
 
   if (loading) {

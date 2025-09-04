@@ -12,6 +12,12 @@
     "tail": "npx tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css"
   },
   "dependencies": {
+    "@google/maps": "^1.1.3",
+    "@googlemaps/extended-component-library": "^0.6.14",
+    "@googlemaps/google-maps-services-js": "^3.4.2",
+    "@googlemaps/js-api-loader": "^1.16.10",
+    "@googlemaps/markerclusterer": "^2.6.2",
+    "@vis.gl/react-google-maps": "^1.5.5",
     "ag-grid-community": "^34.1.2",
     "ag-grid-react": "^34.1.2",
     "axios": "^1.8.4",
