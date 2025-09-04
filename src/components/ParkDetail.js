@@ -21,7 +21,7 @@ const ParkDetail = () => {
     document.head.appendChild(googleMapScript);
 
     // Fetch skatepark data
-    fetchParkDetails();
+    fetchParkDetails().then(() => setLoading(false));
 
     return () => {
       // Clean up Google Maps script

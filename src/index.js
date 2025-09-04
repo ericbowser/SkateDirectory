@@ -1,34 +1,33 @@
 ﻿import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.js';
-import { createBrowserRouter, RouterProvider } from "react-router";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ParksList from "./components/ParksList";
 import SkateParkForm from "./components/SkateParkForm";
-import Map from "./components/Map";
-import Features from "./components/Features";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import './styles/output.css';
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+
+ModuleRegistry.registerModules([ AllCommunityModule ]);
 
 let router = createBrowserRouter([
   {
     path: "/",
-    Component: App
-  },
-  {
-    path: "/parks",
-    Component: ParksList
-  },
-  {
-    path: "/addpark",
-    Component: SkateParkForm
-  },
-  {
-    path: "/map",
-    Component: Map
-  },
-  {
-    path: "/features",
-    Component: Features
-  },
+    Component: App,
+    children: [
+      {
+        index: true,
+        Component: ParksList
+      },
+      {
+        path: "parks",
+        Component: ParksList
+      },
+      {
+        path: "skatepark-form",
+        Component: SkateParkForm
+      }
+    ]
+  }
 ]);
 
 const container = document.getElementById('root');

@@ -14,25 +14,24 @@ const MapView = () => {
 
   useEffect(() => {
     // Load Google Maps API
+/*
     const googleMapScript = document.createElement('script');
     googleMapScript.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.GOOGLE_MAPS_API_KEY}&libraries=places`;
     googleMapScript.async = true;
     googleMapScript.defer = true;
     googleMapScript.onload = () => setMapLoaded(true);
     document.head.appendChild(googleMapScript);
+*/
 
     // Fetch skatepark data
-    fetchParks().then(parks => {
-      console.log('parks', parks);
+    const Parks = async () => {
+      const parks = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
       setParks(parks);
       setLoading(false);
-    });
+    }
+    console.log('parks', Parks)
 
-    return () => {
-      // Clean up Google Maps script
-      document.head.removeChild(googleMapScript);
-    };
-  }, []);
+  }, [loading]);
   
   async function fetchParks() {
     const responseData = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`)
