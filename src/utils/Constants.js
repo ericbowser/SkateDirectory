@@ -20,8 +20,6 @@ function addMarkers(filter) {
   // Filter parks based on selection
   const filteredParks = skateparks.filter(park => {
     if (filter === 'all') return true;
-    if (filter === 'beginner') return park.difficulty === 'beginner';
-    if (filter === 'advanced') return park.difficulty === 'advanced';
     if (filter === 'indoor') return park.type === 'indoor';
     return true;
   });
@@ -39,7 +37,6 @@ function addMarkers(filter) {
             <div>
               <h3>${park.name}</h3>
               <p>${park.description}</p>
-              <p>Difficulty: ${park.difficulty}</p>
               <button onclick="location.href='/parks/${park.name.toLowerCase().replace(/\s+/g, '-')}'">
                 View Details
               </button>
@@ -60,4 +57,4 @@ function filterParks(filter) {
 }
 
 // Note: In a real implementation, you would replace this with your actual Google Maps API key
-// window.initMap = initMap;
+ window.initMap = initMap;

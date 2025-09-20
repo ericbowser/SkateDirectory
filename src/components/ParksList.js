@@ -19,7 +19,6 @@ const ParksList = () => {
   const [colDefs] = useState([
     { field: "parkName", headerName: "Name", filter: true, sortable: true, flex: 1 },
     { field: "parkAddress", headerName: "Address", filter: true, sortable: true, flex: 1.5 },
-    { field: "difficultyOpinion", headerName: "Difficulty", filter: true, sortable: true, flex: 1 },
     { field: "parkStatus", headerName: "Status", filter: true, sortable: true, flex: 1 },
     { field: "hasLighting", headerName: "Lighting", filter: true, sortable: true, flex: 0.5, valueFormatter: p => p.value ? 'Yes' : 'No' },
     { field: "opens", headerName: "Opens", sortable: true, flex: 0.5 },

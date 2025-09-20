@@ -71,15 +71,6 @@ const QuickSearch = ({ parks, onResultClick }) => {
     }, 150);
   };
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty?.toLowerCase()) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   const getDistanceFromUser = (park) => {
     // Placeholder for geolocation distance calculation
     // You can implement this later with user's location
@@ -128,10 +119,6 @@ const QuickSearch = ({ parks, onResultClick }) => {
 
                   {/* Quick Info Row */}
                   <div className="flex items-center gap-2 mt-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(park.DifficultyOpinion)}`}>
-                      {park.DifficultyOpinion}
-                    </span>
-
                     {park.HasVariableHours ? (
                       <span className="text-xs text-gray-500">
                         {park.Opens} - Dusk

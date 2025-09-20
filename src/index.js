@@ -17,7 +17,7 @@ let router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: ParksList
+        Component: Map
       },
       {
         path: "parks",
