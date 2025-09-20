@@ -1,111 +1,47 @@
-﻿import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router';
-import {FetchData, PostData} from "../../api/http";
+﻿import React, {useEffect, useState} from 'react';
+import {FetchData} from "../../api/http";
+import {AgGridReact} from 'ag-grid-react';
+import myTheme from "../styles/ag-grid-theme-builder";
+import config from '../../env.json';
+
+const WebsiteLinkRenderer = params => {
+    if (params.value) {
+        return <a href={params.value} target="_blank" rel="noopener noreferrer">{params.value}</a>
+    }
+    return null;
+}
 
 const ParksList = () => {
   const [parks, setParks] = useState([]);
-  const [filteredParks, setFilteredParks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [difficultyFilter, setDifficultyFilter] = useState('all');
 
+  const [colDefs] = useState([
+    { field: "parkName", headerName: "Name", filter: true, sortable: true, flex: 1 },
+    { field: "parkAddress", headerName: "Address", filter: true, sortable: true, flex: 1.5 },
+    { field: "parkStatus", headerName: "Status", filter: true, sortable: true, flex: 1 },
+    { field: "hasLighting", headerName: "Lighting", filter: true, sortable: true, flex: 0.5, valueFormatter: p => p.value ? 'Yes' : 'No' },
+    { field: "opens", headerName: "Opens", sortable: true, flex: 0.5 },
+    { field: "closes", headerName: "Closes", sortable: true, flex: 0.5 },
+    { field: "parkWebsite", headerName: "Website", flex: 1, cellRenderer: WebsiteLinkRenderer },
+  ]);
+  
   const fetchParks = async () => {
     setLoading(true);
     try {
-      const response = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
+      const response = await FetchData(`${config.BASE_URL}${config.REL_GET_PARK}`);
       setParks(response);
-      setFilteredParks(response);
-      setLoading(false);
     } catch (err) {
       setError('Failed to load skatepark data. Please try again later.');
-      setLoading(false);
       console.error('Error fetching skateparks:', err);
+    } finally {
+      setLoading(false);
     }
   };
   
   useEffect(() => {
-    if(parks.length === 0) {
-      fetchParks().then(response => console.log(response));
-    } else if (parks.length > 0) {
-      filterAndSortParks();
-    }
-  }, [parks]);
-
-
-  const filterAndSortParks = () => {
-    // Apply search filter
-    let result = parks.filter(park => {
-      const searchLower = search.toLowerCase();
-      return (
-        park.parkName.toLowerCase().includes(searchLower) ||
-        park.parkDescription.toLowerCase().includes(searchLower) ||
-        park.parkAddress.toLowerCase().includes(searchLower)
-      );
-    });
-
-    // Apply difficulty filter
-    if (difficultyFilter !== 'all') {
-      result = result.filter(park => park.DifficultyOpinion === difficultyFilter);
-    }
-
-    // Apply sorting
-    result.sort((a, b) => {
-      let aValue, bValue;
-
-      if (sortBy === 'name') {
-        aValue = a.ParkName;
-        bValue = b.ParkName;
-      } else if (sortBy === 'difficulty') {
-        // Custom difficulty order: Beginner, Intermediate, Advanced, All-Levels
-        const difficultyOrder = {
-          'Beginner': 1,
-          'Intermediate': 2,
-          'Advanced': 3,
-          'All-Levels': 4
-        };
-        aValue = difficultyOrder[a.DifficultyOpinion] || 999;
-        bValue = difficultyOrder[b.DifficultyOpinion] || 999;
-      } else if (sortBy === 'status') {
-        // Custom status order: Active, Under Construction, Temporarily Closed, Closed
-        const statusOrder = {
-          'Active': 1,
-          'Under Construction': 2,
-          'Temporarily Closed': 3,
-          'Closed': 4
-        };
-        aValue = statusOrder[a.ParkStatus] || 999;
-        bValue = statusOrder[b.ParkStatus] || 999;
-      }
-
-      // Apply sort order
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    setFilteredParks(result);
-  };
-
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-  };
-
-  const handleSortChange = (e) => {
-    setSortBy(e.target.value);
-  };
-
-  const handleSortOrderChange = () => {
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-  };
-
-  const handleDifficultyFilterChange = (e) => {
-    setDifficultyFilter(e.target.value);
-  };
+    fetchParks().then(r => console.log(r));
+  }, []);
 
   if (loading) {
     return (
@@ -125,43 +61,21 @@ const ParksList = () => {
   }
 
   return (
-    <div className="parks-list">
+    <div>
       <h1 className="text-3xl font-bold mb-6">All Skateparks</h1>
-
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
-        <div className="flex-grow">
-          <input
-            type="text"
-            placeholder="Search parks by name, description, or address"
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={search}
-            onChange={handleSearchChange}
-          />
-        </div>
-
-        <div className="flex gap-2 items-center">
-          <label htmlFor="sortBy" className="whitespace-nowrap">Sort by:</label>
-          <select
-            id="sortBy"
-            className="px-3 py-2 border rounded-lg"
-            value={sortBy}
-            onChange={handleSortChange}
-          >
-            <option value="name">Name</option>
-            <option value="difficulty">Difficulty</option>
-            <option value="status">Status</option>
-          </select>
-
-          <button
-            onClick={handleSortOrderChange}
-            className="px-3 py-2 border rounded-lg bg-gray-100 hover:bg-gray-200"
-            title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-          >
-            {sortOrder === 'asc' ? '↑' : '↓'}
-          </button>
-        </div>
+      <div style={{width: '100%', height: '600px'}}>
+        <AgGridReact
+          className="ag-theme-custom"
+          theme={myTheme}
+          rowData={parks}
+          columnDefs={colDefs}
+          pagination={true}
+          paginationPageSize={20}
+          paginationPageSizeSelector={[10, 20, 50, 100]}
+        />
+      </div>
     </div>
-  </div>
-  )}
+  );
+};
 
 export default ParksList;

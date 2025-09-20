@@ -22,3 +22,6 @@ build/
 objects/
 
 **/**/output.css
+env.json
+
+ssl/

@@ -21,7 +21,7 @@ const ParkDetail = () => {
     document.head.appendChild(googleMapScript);
 
     // Fetch skatepark data
-    fetchParkDetails();
+    fetchParkDetails().then(() => setLoading(false));
 
     return () => {
       // Clean up Google Maps script
@@ -142,14 +142,6 @@ const ParkDetail = () => {
           <h1 className="text-3xl font-bold mb-2">{park.ParkName}</h1>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-              park.DifficultyOpinion === 'Beginner' ? 'bg-green-100 text-green-800' :
-                park.DifficultyOpinion === 'Intermediate' ? 'bg-blue-100 text-blue-800' :
-                  park.DifficultyOpinion === 'Advanced' ? 'bg-red-100 text-red-800' :
-                    'bg-purple-100 text-purple-800'
-            }`}>
-              {park.DifficultyOpinion}
-            </span>
 
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
               park.ParkStatus === 'Active' ? 'bg-green-100 text-green-800' :

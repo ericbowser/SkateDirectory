@@ -2,11 +2,11 @@ const sql = require('mssql');
 
 // Configuration object
 const config = {
-  server: '',
+  server: 'Erbow-PC',
   database: 'SkateDirectory',
   port: 1433, // SQL Authentication
-  user: '',
-  password: '',
+  user: 'ericbo',
+  password: '1006',
   // OR for Windows Authentication
   trustedConnection: true,
 }
@@ -24,7 +24,6 @@ async function InsertPark(request) {
            LocationLatitude,
            LocationLongitude,
            ParkAddress,
-           DifficultyOpinion,
            HasLighting,
            ParkDescription,
            Opens,
@@ -37,7 +36,6 @@ async function InsertPark(request) {
                ${request.LocationLongitude},
                ${request.LocationLatitude},
                ${request.ParkAddress},
-               ${request.DifficultyOpinion},
                ${request.HasLighting},
                ${request.ParkDescription},
                ${request.Opens},

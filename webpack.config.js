@@ -1,8 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const fs = require("fs");
-const Dotenv = require('dotenv-webpack');
-const dotenv = require('dotenv').config();
+const config = require('./env.json');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -70,22 +69,18 @@ module.exports = (env, argv) => {
       extensions: ['.js', '.jsx']
     },
     plugins: [
-      new HtmlWebpackPlugin({template: './public/index.html'}),
-      new Dotenv({
-        path: '.env', // Path to .env file
-        safe: false, // Don't require .env.example
-        silent: false // Show errors if .env file is missing
-      })
+      new HtmlWebpackPlugin({template: './public/index.html'})
     ],
     devServer: {
       historyApiFallback: true,
-      port: process.env.PORT,
-      host: process.env.HOST,
+      port: config.PORT,
+      host: config.HOST,
       hot: true,
-      // Add local HTTPS configuration
       server: {
         type: 'https',
         options: {
+          key: fs.readFileSync(path.resolve(__dirname, './ssl/server.key')),
+          cert: fs.readFileSync(path.resolve(__dirname, './ssl/server.crt')),
         }
       }
     },
@@ -94,7 +89,7 @@ module.exports = (env, argv) => {
       maxEntrypointSize: 312000,
       maxAssetSize: 312000,
     },
-    mode: process.env.NODE_ENV || 'development',
+    mode: config.NODE_ENV || 'development',
     devtool: 'eval-source-map'
   };
 };

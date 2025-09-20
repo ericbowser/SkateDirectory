@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
-import {FetchData, PostData} from "../../api/http";
-import ParksList from './ParksList';
+import { FetchData, PostData } from "../../api/http";
+import config from '../../env.json';
 
 const SkateparkForm = () => {
   const [formData, setFormData] = useState({
@@ -9,147 +9,24 @@ const SkateparkForm = () => {
     LocationLatitude: '',
     LocationLongitude: '',
     ParkAddress: '',
-    DifficultyOpinion: 'Intermediate',
     HasLighting: false,
     ParkDescription: '',
     Opens: '08:00',
-    Closes: 'Dusk', // Default value, can be either a time or "Dusk"
-    CreatedDate: new Date().toISOString().split('T')[0],
-    LastUpdatedDate: new Date().toISOString().split('T')[0],
+    Closes: 'Dusk',
     ParkWebsite: '',
-    SelectedFeatures: [], // Array of feature IDs
-    isVariableClosing: true // Flag for variable closing time (dusk)
+    HasVariableHours: true, // Simplified from isVariableClosing
   });
 
-  const [availableFeatures, setAvailableFeatures] = useState([{}]);
-  const [parks, setParks] = useState(null);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
-  const [newFeature, setNewFeature] = useState({
-    FeatureName: '',
-    FeatureType: 'Obstacle',
-    FeatureCategory: 'Street'
-  });
-  const [showNewFeatureForm, setShowNewFeatureForm] = useState(false);
-  
-  const fetchParks = async () => {
-    try {
-      const response = await FetchData(`${process.env.BASE_URL}${process.env.REL_GET_PARK}`);
-      setParks(response);
-    } catch (error) {
-      console.error('Error fetching features:', error);
-      setMessage({
-        text: 'Failed to load features. Please refresh the page.',
-        type: 'error'
-      });
-    }
-  }
-  
-  // Fetch available features from the database
-  useEffect(() => {
-    if (!parks) {
-      fetchParks().then(parks => {
-        console.log("fetched parks", parks);
-      });
-    }
-  }, [parks]);
 
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
-    if (type === 'checkbox') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: checked
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-  };
-
-  // Toggle variable closing time
-  const handleVariableClosingChange = (e) => {
-    const isVariable = e.target.checked;
     setFormData(prev => ({
       ...prev,
-      isVariableClosing: isVariable,
-      Closes: isVariable ? 'Dusk' : '21:00'
+      [name]: type === 'checkbox' ? checked : value
     }));
-  };
-
-  // Toggle feature selection
-  const toggleFeature = (featureId) => {
-    setFormData(prev => {
-      // Check if feature is already selected
-      if (prev.SelectedFeatures.includes(featureId)) {
-        // Remove feature
-        return {
-          ...prev,
-          SelectedFeatures: prev.SelectedFeatures.filter(id => id !== featureId)
-        };
-      } else {
-        // Add feature
-        return {
-          ...prev,
-          SelectedFeatures: [...prev.SelectedFeatures, featureId]
-        };
-      }
-    });
-  };
-
-  // Handle new feature input
-  const handleNewFeatureChange = (e) => {
-    const { name, value } = e.target;
-    setNewFeature(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Add new feature to database
-  const addNewFeature = async (e) => {
-    e.preventDefault();
-
-    if (!newFeature.FeatureName.trim()) {
-      setMessage({
-        text: 'Feature name is required',
-        type: 'error'
-      });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await PostData(`${process.env.BASE_URL}${process.env.REL_GET_FEATURE}`, newFeature);
-
-      // Add new feature to available features
-      setAvailableFeatures(prev => [...prev, response.data]);
-
-      // Reset new feature form
-      setNewFeature({
-        FeatureName: '',
-        FeatureType: 'Obstacle',
-        FeatureCategory: 'Street'
-      });
-
-      setShowNewFeatureForm(false);
-      setMessage({
-        text: `Added new feature: ${response.data.FeatureName}`,
-        type: 'success'
-      });
-    } catch (error) {
-      console.error('Error adding new feature:', error);
-      setMessage({
-        text: error.response?.data?.message || 'Error adding feature',
-        type: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
   };
 
   // Handle form submission
@@ -172,15 +49,13 @@ const SkateparkForm = () => {
         ...formData,
         LocationLatitude: lat,
         LocationLongitude: lng,
-        LastUpdatedDate: new Date().toISOString().split('T')[0]
+        LastUpdatedDate: new Date().toISOString()
       };
 
-      console.log('Skatepark Data:', skateparkData);
-      // Send to API
-      const response = await PostData(`${process.env.BASE_URL}${process.env.REL_ADD_PARK}`, skateparkData);
+      const response = await PostData(`${config.BASE_URL}${config.REL_ADD_PARK}`, skateparkData);
 
       setMessage({
-        text: `Successfully added ${response.data.ParkName} to the database!`,
+        text: `Successfully added ${response.ParkName} to the database!`,
         type: 'success'
       });
 
@@ -191,16 +66,12 @@ const SkateparkForm = () => {
         LocationLatitude: '',
         LocationLongitude: '',
         ParkAddress: '',
-        DifficultyOpinion: 'Intermediate',
         HasLighting: false,
         ParkDescription: '',
         Opens: '08:00',
         Closes: 'Dusk',
-        CreatedDate: new Date().toISOString().split('T')[0],
-        LastUpdatedDate: new Date().toISOString().split('T')[0],
         ParkWebsite: '',
-        SelectedFeatures: [],
-        isVariableClosing: true
+        HasVariableHours: true,
       });
 
     } catch (error) {
@@ -214,310 +85,88 @@ const SkateparkForm = () => {
     }
   };
 
-  // Group features by category for better organization
-  const groupedFeatures = availableFeatures.reduce((acc, feature) => {
-    const category = feature.FeatureCategory || 'Other';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(feature);
-    return acc;
-  }, {});
 
   return (
-    <div className="skatepark-form-container">
-      <h2>Add New Skatepark</h2>
+    <div className="skatepark-form-container max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6">Add New Skatepark</h2>
 
       {message.text && (
-        <div>
+        <div className={`p-4 mb-4 rounded ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
           {message.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <h3>Basic Information</h3>
-
-          <div>
-            <label htmlFor="ParkName">Skatepark Name *</label>
-            <input
-              type="text"
-              id="ParkName"
-              name="ParkName"
-              value={formData.ParkName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="ParkDescription">Description *</label>
-            <textarea
-              id="ParkDescription"
-              name="ParkDescription"
-              value={formData.ParkDescription}
-              onChange={handleChange}
-              required
-              rows="4"
-            />
-          </div>
-
-          <div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Information */}
+        <div className="p-4 border rounded-lg">
+          <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="DifficultyOpinion">Difficulty Level</label>
-              <select
-                id="DifficultyOpinion"
-                name="DifficultyOpinion"
-                value={formData.DifficultyOpinion}
-                onChange={handleChange}
-              >
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-                <option value="All-Levels">All Levels</option>
-              </select>
+              <label htmlFor="ParkName" className="block text-sm font-medium text-gray-700">Skatepark Name *</label>
+              <input type="text" id="ParkName" name="ParkName" value={formData.ParkName} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
             </div>
-
             <div>
-              <label htmlFor="ParkStatus">Status</label>
-              <select
-                id="ParkStatus"
-                name="ParkStatus"
-                value={formData.ParkStatus}
-                onChange={handleChange}
-              >
-                <option value="Active">Active</option>
-                <option value="Under Construction">Under Construction</option>
-                <option value="Closed">Closed</option>
-                <option value="Temporarily Closed">Temporarily Closed</option>
+              <label htmlFor="ParkStatus" className="block text-sm font-medium text-gray-700">Status</label>
+              <select id="ParkStatus" name="ParkStatus" value={formData.ParkStatus} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                <option>Active</option>
+                <option>Under Construction</option>
+                <option>Closed</option>
+                <option>Temporarily Closed</option>
               </select>
             </div>
           </div>
+          <div className="mt-4">
+            <label htmlFor="ParkDescription" className="block text-sm font-medium text-gray-700">Description *</label>
+            <textarea id="ParkDescription" name="ParkDescription" value={formData.ParkDescription} onChange={handleChange} required rows="4" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
+          </div>
         </div>
 
-        <div>
-          <h3>Location</h3>
-
-          <div>
-            <label htmlFor="ParkAddress">Address</label>
-            <input
-              type="text"
-              id="ParkAddress"
-              name="ParkAddress"
-              value={formData.ParkAddress}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="LocationLatitude">Latitude *</label>
-              <input
-                type="text"
-                id="LocationLatitude"
-                name="LocationLatitude"
-                value={formData.LocationLatitude}
-                onChange={handleChange}
-                required
-                placeholder="40.7608"
-              />
-            </div>
-
+        {/* Location Information */}
+        <div className="p-4 border rounded-lg">
+          <h3 className="text-lg font-semibold mb-4">Location</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="LocationLongitude">Longitude *</label>
-              <input
-                type="text"
-                id="LocationLongitude"
-                name="LocationLongitude"
-                value={formData.LocationLongitude}
-                onChange={handleChange}
-                required
-                placeholder="-111.8910"
-              />
+              <label htmlFor="LocationLatitude" className="block text-sm font-medium text-gray-700">Latitude *</label>
+              <input type="text" id="LocationLatitude" name="LocationLatitude" value={formData.LocationLatitude} onChange={handleChange} required placeholder="40.7608" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="ParkWebsite">Website (Optional)</label>
-            <input
-              type="url"
-              id="ParkWebsite"
-              name="ParkWebsite"
-              value={formData.ParkWebsite}
-              onChange={handleChange}
-              placeholder="https://example.com"
-            />
-          </div>
-        </div>
-
-        <div>
-          <h3>Features</h3>
-
-          {Object.entries(groupedFeatures).map(([category, features]) => (
-            <div key={category}>
-              <h4>{category}</h4>
-              <div>
-                {features.map(feature => (
-                  <div key={feature.Id}>
-                    <input
-                      type="checkbox"
-                      id={`feature-${feature.Id}`}
-                      checked={formData.SelectedFeatures.includes(feature.Id)}
-                      onChange={() => toggleFeature(feature.Id)}
-                    />
-                    <label htmlFor={`feature-${feature.Id}`}>
-                      {feature.FeatureName}
-                      {feature.FeatureType && ` (${feature.FeatureType})`}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          <div>
-            {showNewFeatureForm ? (
-              <div>
-                <h4>Add New Feature</h4>
-                <div>
-                  <div>
-                    <label htmlFor="FeatureName">Feature Name *</label>
-                    <input
-                      type="text"
-                      id="FeatureName"
-                      name="FeatureName"
-                      value={newFeature.FeatureName}
-                      onChange={handleNewFeatureChange}
-                      required
-                    />
-                  </div>
-
-                  <div >
-                    <label htmlFor="FeatureType">Feature Type</label>
-                    <select
-                      id="FeatureType"
-                      name="FeatureType"
-                      value={newFeature.FeatureType}
-                      onChange={handleNewFeatureChange}
-                    >
-                      <option value="Obstacle">Obstacle</option>
-                      <option value="Ramp">Ramp</option>
-                      <option value="Rail">Rail</option>
-                      <option value="Bowl">Bowl</option>
-                      <option value="Pool">Pool</option>
-                      <option value="Amenity">Amenity</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="FeatureCategory">Category</label>
-                    <select
-                      id="FeatureCategory"
-                      name="FeatureCategory"
-                      value={newFeature.FeatureCategory}
-                      onChange={handleNewFeatureChange}
-                    >
-                      <option value="Street">Street</option>
-                      <option value="Vert">Vert</option>
-                      <option value="Transition">Transition</option>
-                      <option value="Facility">Facility</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <button
-                    type="button"
-                    onClick={addNewFeature}
-                    disabled={loading || !newFeature.FeatureName.trim()}
-                  >
-                    {loading ? 'Adding...' : 'Add Feature'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewFeatureForm(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowNewFeatureForm(true)}
-              >
-                + Add New Feature
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div >
-          <h3>Hours of Operation</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="Opens">Opens At</label>
-              <input
-                type="time"
-                id="Opens"
-                name="Opens"
-                value={formData.Opens}
-                onChange={handleChange}
-              />
-            </div>
-
             <div>
-              <label htmlFor="Closes">Closes At</label>
-              {formData.isVariableClosing ? (
-                <select
-                  id="Closes"
-                  name="Closes"
-                  value={formData.Closes}
-                  onChange={handleChange}
-                >
-                  <option value="Dusk">Dusk</option>
-                  <option value="Sunset">Sunset</option>
-                </select>
-              ) : (
-                <input
-                  type="time"
-                  id="Closes"
-                  name="Closes"
-                  value={formData.Closes}
-                  onChange={handleChange}
-                />
-              )}
+              <label htmlFor="LocationLongitude" className="block text-sm font-medium text-gray-700">Longitude *</label>
+              <input type="text" id="LocationLongitude" name="LocationLongitude" value={formData.LocationLongitude} onChange={handleChange} required placeholder="-111.8910" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
             </div>
           </div>
-
-          <div>
-            <input
-              type="checkbox"
-              id="isVariableClosing"
-              name="isVariableClosing"
-              checked={formData.isVariableClosing}
-              onChange={handleVariableClosingChange}
-            />
-            <label htmlFor="isVariableClosing">Variable Closing Time (Dusk/Sunset)</label>
+          <div className="mt-4">
+            <label htmlFor="ParkAddress" className="block text-sm font-medium text-gray-700">Address</label>
+            <input type="text" id="ParkAddress" name="ParkAddress" value={formData.ParkAddress} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
           </div>
-
-          <div>
-            <input
-              type="checkbox"
-              id="HasLighting"
-              name="HasLighting"
-              checked={formData.HasLighting}
-              onChange={handleChange}
-            />
-            <label htmlFor="HasLighting">Has Lights for Night Skating</label>
+          <div className="mt-4">
+            <label htmlFor="ParkWebsite" className="block text-sm font-medium text-gray-700">Website (Optional)</label>
+            <input type="url" id="ParkWebsite" name="ParkWebsite" value={formData.ParkWebsite} onChange={handleChange} placeholder="https://example.com" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="submit" disabled={loading}>
+        {/* Hours and Lighting */}
+        <div className="p-4 border rounded-lg">
+          <h3 className="text-lg font-semibold mb-4">Hours and Lighting</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="Opens" className="block text-sm font-medium text-gray-700">Opens At</label>
+              <input type="time" id="Opens" name="Opens" value={formData.Opens} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
+            </div>
+            <div>
+              <label htmlFor="Closes" className="block text-sm font-medium text-gray-700">Closes At</label>
+              <input type="time" id="Closes" name="Closes" value={formData.Closes} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="flex items-center">
+              <input id="HasLighting" name="HasLighting" type="checkbox" checked={formData.HasLighting} onChange={handleChange} className="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+              <label htmlFor="HasLighting" className="ml-2 block text-sm text-gray-900">Has Lights for Night Skating</label>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button type="submit" disabled={loading} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
             {loading ? 'Submitting...' : 'Add Skatepark'}
           </button>
         </div>

@@ -24,6 +24,7 @@ const FetchData = async (url = '') => {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*'
     }
+    console.log(url)
     const response = await axios.get(url, {...headers});
     if (response.status === 200) {
       return response.data;
