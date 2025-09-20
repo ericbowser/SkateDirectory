@@ -2,11 +2,11 @@ const sql = require('mssql');
 
 // Configuration object
 const config = {
-  server: 'Erbow-PC',
+  server: '',
   database: 'SkateDirectory',
   port: 1433, // SQL Authentication
-  user: 'ericbo',
-  password: '1006',
+  user: '',
+  password: '',
   // OR for Windows Authentication
   trustedConnection: true,
 }
