@@ -21,7 +21,7 @@
     "ag-grid-community": "^34.1.2",
     "ag-grid-react": "^34.1.2",
     "axios": "^1.8.4",
-    "body-parser": "^2.2.0",
+    "body-parser": "^2.2.2",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "isbot": "^5.1.17",
@@ -29,8 +29,8 @@
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.0",
-    "react-router": "^7.6.1",
-    "react-router-dom": "^7.6.1"
+    "react-router": "^7.13.0",
+    "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.27.2",
@@ -59,7 +59,7 @@
     "svg": "^0.1.0",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.7.2",
-    "vite": "^6.3.5",
+    "vite": "^6.4.1",
     "vite-tsconfig-paths": "^5.1.4",
     "vm": "^0.1.0",
     "webpack": "^5.99.9",
