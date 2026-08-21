@@ -17,11 +17,9 @@ node_modules/
 .env
 
 # Build artifacts
-*.
-build/ 
-objects/
+build/
+dist/
 
 **/**/output.css
-env.json
 
 ssl/

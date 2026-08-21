@@ -2,7 +2,7 @@
 import {FetchData} from "../../api/http";
 import {AgGridReact} from 'ag-grid-react';
 import myTheme from "../styles/ag-grid-theme-builder";
-import config from '../../env.json';
+import { apiBaseUrl, apiRoutes } from '../config/env';
 
 const WebsiteLinkRenderer = params => {
     if (params.value) {
@@ -29,7 +29,10 @@ const ParksList = () => {
   const fetchParks = async () => {
     setLoading(true);
     try {
-      const response = await FetchData(`${config.BASE_URL}${config.REL_GET_PARK}`);
+      const response = await FetchData(`${apiBaseUrl}${apiRoutes.getParks}`);
+      if (!Array.isArray(response)) {
+        throw new Error(`Expected park list array, got ${typeof response}`);
+      }
       setParks(response);
     } catch (err) {
       setError('Failed to load skatepark data. Please try again later.');
