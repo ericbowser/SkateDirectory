@@ -6,7 +6,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "tail": "npx tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css",
+    "tail:watch": "npx tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css --watch"
   },
   "dependencies": {
     "@google/maps": "^1.1.3",

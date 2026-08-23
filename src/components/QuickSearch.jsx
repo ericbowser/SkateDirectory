@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
-const QuickSearch = ({ parks, onResultClick }) => {
+const QuickSearch = ({ parks = [], onResultClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
@@ -11,10 +11,14 @@ const QuickSearch = ({ parks, onResultClick }) => {
 
   useEffect(() => {
     if (searchTerm.length > 1) {
-      const filtered = parks.filter(park =>
-        park.ParkName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        park.ParkAddress.toLowerCase().includes(searchTerm.toLowerCase())
-      ).slice(0, 5); // Limit to 5 results for quick display
+      const query = searchTerm.toLowerCase();
+      const filtered = parks
+        .filter((park) => {
+          const name = (park.parkName || park.ParkName || '').toLowerCase();
+          const address = (park.parkAddress || park.ParkAddress || '').toLowerCase();
+          return name.includes(query) || address.includes(query);
+        })
+        .slice(0, 6);
 
       setResults(filtered);
       setShowResults(true);
@@ -31,18 +35,18 @@ const QuickSearch = ({ parks, onResultClick }) => {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev =>
-          prev < results.length - 1 ? prev + 1 : prev
-        );
+        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
         break;
       case 'Enter':
         e.preventDefault();
         if (selectedIndex >= 0 && results[selectedIndex]) {
           handleResultClick(results[selectedIndex]);
+        } else if (results[0]) {
+          handleResultClick(results[0]);
         }
         break;
       case 'Escape':
@@ -50,20 +54,19 @@ const QuickSearch = ({ parks, onResultClick }) => {
         setSelectedIndex(-1);
         searchRef.current?.blur();
         break;
+      default:
+        break;
     }
   };
 
   const handleResultClick = (park) => {
-    setSearchTerm('');
+    setSearchTerm(park.parkName || park.ParkName || '');
     setShowResults(false);
     setSelectedIndex(-1);
-    if (onResultClick) {
-      onResultClick(park);
-    }
+    onResultClick?.(park);
   };
 
-  const handleBlur = (e) => {
-    // Delay hiding results to allow clicks on results
+  const handleBlur = () => {
     setTimeout(() => {
       if (!resultsRef.current?.contains(document.activeElement)) {
         setShowResults(false);
@@ -71,134 +74,101 @@ const QuickSearch = ({ parks, onResultClick }) => {
     }, 150);
   };
 
-  const getDistanceFromUser = (park) => {
-    // Placeholder for geolocation distance calculation
-    // You can implement this later with user's location
+  const getName = (park) => park.parkName || park.ParkName || 'Unknown park';
+  const getAddress = (park) => park.parkAddress || park.ParkAddress || '';
+  const getId = (park) => park.id || park.ParkId;
+  const getHours = (park) => {
+    const opens = park.opens || park.Opens;
+    const closes = park.closes || park.Closes;
+    if (opens && closes) return `${opens} – ${closes}`;
     return null;
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
-      <div className="relative">
+    <div className="relative w-full">
+      <label htmlFor="park-search" className="sr-only">
+        Search skate parks
+      </label>
+      <div className="relative group">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5">
+          <svg
+            className="h-6 w-6 text-slate-500 group-focus-within:text-amber-400 transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
         <input
+          id="park-search"
           ref={searchRef}
-          type="text"
+          type="search"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => searchTerm.length > 1 && setShowResults(true)}
           onBlur={handleBlur}
-          placeholder="Quick search for skate parks..."
-          className="w-full p-3 pl-10 pr-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          placeholder="Search parks by name or address…"
+          autoComplete="off"
+          className="w-full rounded-2xl border border-slate-600/80 bg-slate-800/90 py-4 pl-14 pr-5 text-lg text-slate-100 placeholder:text-slate-500 shadow-lg shadow-black/30 outline-none transition-all focus:border-amber-400/70 focus:ring-4 focus:ring-amber-400/15"
         />
-        <div className="absolute left-3 top-3">
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
       </div>
 
-      {/* Quick Results Dropdown */}
       {showResults && results.length > 0 && (
         <div
           ref={resultsRef}
-          className="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto"
+          className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-slate-700 bg-slate-800 shadow-2xl shadow-black/50"
+          role="listbox"
         >
           {results.map((park, index) => (
-            <div
-              key={park.ParkId}
-              className={`p-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-gray-50 ${
-                selectedIndex === index ? 'bg-blue-50' : ''
+            <button
+              key={getId(park)}
+              type="button"
+              role="option"
+              aria-selected={selectedIndex === index}
+              className={`flex w-full items-start justify-between gap-3 border-b border-slate-700/80 px-4 py-3 text-left last:border-b-0 transition-colors ${
+                selectedIndex === index ? 'bg-slate-700/80' : 'hover:bg-slate-700/50'
               }`}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleResultClick(park)}
             >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">{park.ParkName}</h4>
-                  <p className="text-sm text-gray-600 mt-1">{park.ParkAddress}</p>
-
-                  {/* Quick Info Row */}
-                  <div className="flex items-center gap-2 mt-2">
-                    {park.HasVariableHours ? (
-                      <span className="text-xs text-gray-500">
-                        {park.Opens} - Dusk
-                      </span>
-                    ) : park.Opens && park.Closes ? (
-                      <span className="text-xs text-gray-500">
-                        {park.Opens} - {park.Closes}
-                      </span>
-                    ) : null}
-
-                    {getDistanceFromUser(park) && (
-                      <span className="text-xs text-blue-600">
-                        {getDistanceFromUser(park)} mi
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Features Preview */}
-                  {park.Features && park.Features.length > 0 && (
-                    <div className="mt-1">
-                      <span className="text-xs text-gray-500">
-                        {park.Features.slice(0, 3).map(f => f.FeatureName).join(', ')}
-                        {park.Features.length > 3 && ` +${park.Features.length - 3} more`}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="ml-3 flex flex-col gap-1">
-                  <Link
-                    to={`/park/${park.ParkId}`}
-                    className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors text-center"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Details
-                  </Link>
-                  {park.LocationLatitude && park.LocationLongitude && (
-                    <a
-                      href={`https://maps.google.com/maps?q=${park.LocationLatitude},${park.LocationLongitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 transition-colors text-center"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Directions
-                    </a>
-                  )}
-                </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="truncate font-semibold text-slate-100">{getName(park)}</h4>
+                {getAddress(park) && (
+                  <p className="mt-0.5 truncate text-sm text-slate-400">{getAddress(park)}</p>
+                )}
+                {getHours(park) && (
+                  <p className="mt-1 text-xs text-slate-500">{getHours(park)}</p>
+                )}
               </div>
-            </div>
+              <span className="shrink-0 rounded-lg bg-amber-500/15 px-2 py-1 text-xs font-medium text-amber-400">
+                Show on map
+              </span>
+            </button>
           ))}
 
-          {/* View All Results */}
-          {parks.filter(park =>
-            park.ParkName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            park.ParkAddress.toLowerCase().includes(searchTerm.toLowerCase())
-          ).length > 5 && (
-            <div className="p-2 border-t border-gray-200 bg-gray-50">
-              <Link
-                to={`/parks?search=${encodeURIComponent(searchTerm)}`}
-                className="block text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
-              >
-                View all results ({parks.filter(park =>
-                park.ParkName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                park.ParkAddress.toLowerCase().includes(searchTerm.toLowerCase())
-              ).length})
-              </Link>
-            </div>
-          )}
+          <div className="border-t border-slate-700 bg-slate-900/60 px-4 py-2">
+            <Link
+              to={`/parks?search=${encodeURIComponent(searchTerm)}`}
+              className="block text-center text-sm font-medium text-amber-400 hover:text-amber-300"
+            >
+              Browse all parks
+            </Link>
+          </div>
         </div>
       )}
 
-      {/* No Results */}
       {showResults && results.length === 0 && searchTerm.length > 1 && (
-        <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 p-3">
-          <div className="text-center text-gray-500">
-            <p>No parks found for "{searchTerm}"</p>
-            <p className="text-sm mt-1">Try a different search term</p>
-          </div>
+        <div className="absolute z-50 mt-2 w-full rounded-2xl border border-slate-700 bg-slate-800 p-4 text-center shadow-2xl">
+          <p className="text-slate-300">No parks found for “{searchTerm}”</p>
+          <p className="mt-1 text-sm text-slate-500">Try another name or part of an address</p>
         </div>
       )}
     </div>
