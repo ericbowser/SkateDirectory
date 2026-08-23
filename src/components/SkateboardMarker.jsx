@@ -1,34 +1,79 @@
 import React from 'react';
 
-/** High-contrast defaults for dark map backgrounds */
+/**
+ * High-contrast pins for the dark brown map:
+ * bone-white deck (reads on warm land) + cyan wheels (complements brown).
+ */
 export const SKATE_MARKER_COLORS = {
-  background: '#e11d48',
-  borderColor: '#fecdd3',
-  glyphColor: '#fff1f2',
+  background: '#f8fafc',
+  borderColor: '#0c0a09',
+  glyphColor: '#0c0a09',
+  wheel: '#22d3ee',
+  wheelRim: '#ecfeff',
 };
 
 /**
- * Build an SVG data-URL icon for classic google.maps.Marker.
- * Red deck + white wheels for visibility on night map styles.
+ * Side-view skateboard: kicktail deck + two wheels underneath.
  */
-export function buildSkateboardIconUrl(colors = SKATE_MARKER_COLORS, { size = 40, selected = false } = {}) {
+function SkateboardGlyph({ background, borderColor, wheel, wheelRim }) {
+  return (
+    <>
+      {/* Dark understroke — keeps the deck readable on amber highways too */}
+      <path
+        d="M4 16
+           C6 16 7.5 21.5 10 22.5
+           L30 22.5
+           C32.5 21.5 34 16 36 16"
+        fill="none"
+        stroke={borderColor}
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Bright deck */}
+      <path
+        d="M4 16
+           C6 16 7.5 21.5 10 22.5
+           L30 22.5
+           C32.5 21.5 34 16 36 16"
+        fill="none"
+        stroke={background}
+        strokeWidth="3.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Wheels */}
+      <circle cx="13.5" cy="29" r="3.6" fill={wheel} stroke={wheelRim} strokeWidth="1.1" />
+      <circle cx="26.5" cy="29" r="3.6" fill={wheel} stroke={wheelRim} strokeWidth="1.1" />
+      <circle cx="13.5" cy="29" r="1" fill={wheelRim} />
+      <circle cx="26.5" cy="29" r="1" fill={wheelRim} />
+    </>
+  );
+}
+
+/**
+ * Build an SVG data-URL icon for classic google.maps.Marker.
+ */
+export function buildSkateboardIconUrl(colors = SKATE_MARKER_COLORS, { size = 32, selected = false } = {}) {
   const background = colors.background || SKATE_MARKER_COLORS.background;
   const borderColor = colors.borderColor || SKATE_MARKER_COLORS.borderColor;
+  const wheel = colors.wheel || SKATE_MARKER_COLORS.wheel;
+  const wheelRim = colors.wheelRim || SKATE_MARKER_COLORS.wheelRim;
   const scale = selected ? 1.25 : 1;
   const dim = Math.round(size * scale);
 
   const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${dim}" height="${dim}" viewBox="0 0 40 40">
-  <circle cx="11" cy="9" r="2.8" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.8"/>
-  <circle cx="11" cy="31" r="2.8" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.8"/>
-  <circle cx="29" cy="9" r="2.8" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.8"/>
-  <circle cx="29" cy="31" r="2.8" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.8"/>
-  <rect x="8.5" y="8" width="5" height="2" rx="1" fill="#f8fafc"/>
-  <rect x="8.5" y="30" width="5" height="2" rx="1" fill="#f8fafc"/>
-  <rect x="26.5" y="8" width="5" height="2" rx="1" fill="#f8fafc"/>
-  <rect x="26.5" y="30" width="5" height="2" rx="1" fill="#f8fafc"/>
-  <rect x="6" y="13" width="28" height="14" rx="7" fill="${background}" stroke="${borderColor}" stroke-width="1.75"/>
-  <rect x="9" y="16.5" width="22" height="7" rx="3.5" fill="#000000" opacity="0.18"/>
+  <path d="M4 16 C6 16 7.5 21.5 10 22.5 L30 22.5 C32.5 21.5 34 16 36 16"
+        fill="none" stroke="${borderColor}" stroke-width="5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M4 16 C6 16 7.5 21.5 10 22.5 L30 22.5 C32.5 21.5 34 16 36 16"
+        fill="none" stroke="${background}" stroke-width="3.1"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="13.5" cy="29" r="3.6" fill="${wheel}" stroke="${wheelRim}" stroke-width="1.1"/>
+  <circle cx="26.5" cy="29" r="3.6" fill="${wheel}" stroke="${wheelRim}" stroke-width="1.1"/>
+  <circle cx="13.5" cy="29" r="1" fill="${wheelRim}"/>
+  <circle cx="26.5" cy="29" r="1" fill="${wheelRim}"/>
 </svg>`.trim();
 
   return {
@@ -39,12 +84,13 @@ export function buildSkateboardIconUrl(colors = SKATE_MARKER_COLORS, { size = 40
 }
 
 /**
- * SkateboardMarker — top-down skateboard for AdvancedMarker content.
- * Red deck + white wheels for dark map backgrounds.
+ * SkateboardMarker — for AdvancedMarker content.
  */
-const SkateboardMarker = ({ colors = SKATE_MARKER_COLORS, size = 34, selected = false }) => {
+const SkateboardMarker = ({ colors = SKATE_MARKER_COLORS, size = 28, selected = false }) => {
   const background = colors.background || SKATE_MARKER_COLORS.background;
   const borderColor = colors.borderColor || SKATE_MARKER_COLORS.borderColor;
+  const wheel = colors.wheel || SKATE_MARKER_COLORS.wheel;
+  const wheelRim = colors.wheelRim || SKATE_MARKER_COLORS.wheelRim;
 
   return (
     <svg
@@ -52,34 +98,19 @@ const SkateboardMarker = ({ colors = SKATE_MARKER_COLORS, size = 34, selected = 
       height={size}
       viewBox="0 0 40 40"
       style={{
-        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.75))',
+        filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.85))',
         transform: selected ? 'scale(1.3)' : 'scale(1)',
         transformOrigin: 'center bottom',
         transition: 'transform 0.15s ease-out',
         cursor: 'pointer',
       }}
     >
-      {/* white wheels */}
-      <circle cx="11" cy="9" r="2.8" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.8" />
-      <circle cx="11" cy="31" r="2.8" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.8" />
-      <circle cx="29" cy="9" r="2.8" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.8" />
-      <circle cx="29" cy="31" r="2.8" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.8" />
-
-      {/* light trucks */}
-      <rect x="8.5" y="8" width="5" height="2" rx="1" fill="#f8fafc" />
-      <rect x="8.5" y="30" width="5" height="2" rx="1" fill="#f8fafc" />
-      <rect x="26.5" y="8" width="5" height="2" rx="1" fill="#f8fafc" />
-      <rect x="26.5" y="30" width="5" height="2" rx="1" fill="#f8fafc" />
-
-      {/* red deck */}
-      <rect
-        x="6" y="13" width="28" height="14" rx="7"
-        fill={background}
-        stroke={borderColor}
-        strokeWidth="1.75"
+      <SkateboardGlyph
+        background={background}
+        borderColor={borderColor}
+        wheel={wheel}
+        wheelRim={wheelRim}
       />
-
-      <rect x="9" y="16.5" width="22" height="7" rx="3.5" fill="#000000" opacity="0.18" />
     </svg>
   );
 };

@@ -5,15 +5,93 @@ import {
   AdvancedMarker,
   Marker,
   InfoWindow,
+  useMap,
 } from '@vis.gl/react-google-maps';
 import { FetchData } from '../../api/http';
 import { apiBaseUrl, apiRoutes, googleMapsApiKey, googleMapsMapId } from '../config/env';
 import SkateboardMarker, { buildSkateboardIconUrl, SKATE_MARKER_COLORS } from './SkateboardMarker';
 import QuickSearch from './QuickSearch';
+import SelectedParkPanel from './SelectedParkPanel';
 import { NIGHT_MAP_STYLES } from '../config/mapLayout';
+import { openDirections } from '../utils/directions';
 
-const DEFAULT_CENTER = { lat: 40.75494942, lng: -111.90282008 };
-const DEFAULT_ZOOM = 11;
+/** Salt Lake metro default — Wasatch Front corridor */
+const DEFAULT_CENTER = { lat: 40.72, lng: -111.89 };
+const DEFAULT_ZOOM = 10;
+
+/**
+ * Initial map focus: Salt Lake / Wasatch Front metro only.
+ * Far parks (Wendover, Tooele, Heber, Park City, …) stay searchable.
+ */
+function isSlcMetroPark(park) {
+  const lat = Number(park.locationLatitude ?? park.LocationLatitude);
+  const lng = Number(park.locationLongitude ?? park.LocationLongitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  // West of Tooele / east of Heber–Park City out of initial view
+  return lng >= -112.12 && lng <= -111.55 && lat >= 40.10 && lat <= 41.35;
+}
+
+function parkLatLng(park) {
+  return {
+    lat: Number(park.locationLatitude ?? park.LocationLatitude),
+    lng: Number(park.locationLongitude ?? park.LocationLongitude),
+  };
+}
+
+/**
+ * Fit + restrict to SLC metro on load. When a park is focused (search/click),
+ * clear the restriction and fly to that park.
+ */
+function MapCameraController({ parks, focusedPark }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !parks?.length || !window.google?.maps) return;
+
+    // Search / selection — jump to that park (even if outside SLC)
+    if (focusedPark) {
+      const { lat, lng } = parkLatLng(focusedPark);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      map.setOptions({ restriction: null });
+      map.panTo({ lat, lng });
+      map.setZoom(14);
+      return;
+    }
+
+    // Default / cleared — SLC metro overview
+    const bounds = new window.google.maps.LatLngBounds();
+    let count = 0;
+    for (const park of parks) {
+      if (!isSlcMetroPark(park)) continue;
+      const { lat, lng } = parkLatLng(park);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      bounds.extend({ lat, lng });
+      count += 1;
+    }
+    if (count === 0) return;
+
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const latPad = Math.max(ne.lat() - sw.lat(), 0.05) * 0.04;
+    const lngPad = Math.max(ne.lng() - sw.lng(), 0.05) * 0.04;
+
+    map.setOptions({
+      restriction: {
+        latLngBounds: {
+          north: ne.lat() + latPad,
+          south: sw.lat() - latPad,
+          east: ne.lng() + lngPad,
+          west: sw.lng() - lngPad,
+        },
+        strictBounds: true,
+      },
+    });
+    map.fitBounds(bounds, { top: 8, right: 8, bottom: 8, left: 8 });
+  }, [map, parks, focusedPark]);
+
+  return null;
+}
 
 const MapLoadingState = () => (
   <div className="flex h-full items-center justify-center bg-slate-800 text-slate-300">
@@ -34,11 +112,7 @@ const ParkInfoContent = ({ park }) => (
     <button
       type="button"
       className="cursor-pointer rounded-xl border-none bg-amber-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-500"
-      onClick={() =>
-        window.open(
-          `https://maps.google.com/dir/?api=1&destination=${park.locationLatitude},${park.locationLongitude}`
-        )
-      }
+      onClick={() => openDirections(park)}
     >
       Get Directions
     </button>
@@ -75,11 +149,8 @@ const SkateParksMap = ({ onParkSelect }) => {
   const focusPark = useCallback(
     (park) => {
       setSelectedPark(park);
-      setMapCenter({
-        lat: Number(park.locationLatitude),
-        lng: Number(park.locationLongitude),
-      });
-      setMapZoom(15);
+      setMapCenter(parkLatLng(park));
+      setMapZoom(14);
       onParkSelect?.(park);
     },
     [onParkSelect]
@@ -96,46 +167,52 @@ const SkateParksMap = ({ onParkSelect }) => {
     setSelectedPark(null);
   }, []);
 
+  const slcCount = skateparks.filter(isSlcMetroPark).length;
+
   return (
-    <div className="mx-auto flex w-full max-w-[84.5rem] flex-col gap-6">
-      {/* Focal search */}
-      <section className="pt-2 sm:pt-6">
-        <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-amber-400/80">
-          Find a session
-        </p>
-        <h1 className="mb-2 text-center text-3xl font-bold tracking-tight text-slate-100 sm:text-4xl">
+    <div
+      className={`flex min-h-0 w-full flex-1 flex-col gap-2 ${
+        selectedPark ? 'overflow-y-auto' : 'overflow-hidden'
+      }`}
+    >
+      <section className="shrink-0">
+        <h1 className="mb-1 text-center text-xl font-bold tracking-tight text-slate-100 sm:text-2xl">
           Where are you skating?
         </h1>
-        <p className="mx-auto mb-6 max-w-xl text-center text-slate-400">
-          Search Salt Lake City parks by name or neighborhood, then explore them on the map.
+        <p className="mx-auto mb-2 max-w-xl text-center text-xs text-slate-500">
+          SLC metro on the map — search any Utah park to jump there.
         </p>
         <div className="mx-auto max-w-2xl">
           <QuickSearch parks={skateparks} onResultClick={focusPark} />
         </div>
       </section>
 
-      {/* Map panel */}
-      <section>
-        <div className="mb-3 flex items-end justify-between gap-3 px-1">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-              Map
-            </h2>
-            <p className="text-xs text-slate-500">
-              {loading
-                ? 'Loading parks…'
-                : `${skateparks.length} park${skateparks.length === 1 ? '' : 's'} plotted`}
-            </p>
-          </div>
+      <section
+        className={`flex min-h-0 flex-col ${
+          selectedPark ? 'h-[min(52dvh,420px)] shrink-0' : 'flex-1'
+        }`}
+      >
+        <div className="mb-1 flex shrink-0 items-end justify-between gap-3 px-1">
+          <p className="text-xs text-slate-500">
+            {loading
+              ? 'Loading parks…'
+              : selectedPark
+                ? `Focused: ${selectedPark.parkName}`
+                : `${slcCount} SLC-area parks in view`}
+          </p>
           {selectedPark && (
-            <p className="truncate text-sm text-amber-400/90">
-              Selected: {selectedPark.parkName}
-            </p>
+            <button
+              type="button"
+              onClick={handleInfoWindowClose}
+              className="text-xs text-slate-400 underline-offset-2 hover:text-amber-400 hover:underline"
+            >
+              Back to SLC map
+            </button>
           )}
         </div>
 
-        <div className="rounded-2xl border-2 border-slate-600/90 bg-slate-950 p-1.5 shadow-[0_0_0_1px_rgba(251,191,36,0.12),0_25px_50px_-12px_rgba(0,0,0,0.65)] sm:p-2">
-          <div className="h-[min(77vh,740px)] min-h-[422px] overflow-hidden rounded-xl ring-1 ring-slate-700/80">
+        <div className="flex min-h-0 flex-1 flex-col rounded-2xl border-2 border-slate-600/90 bg-slate-950 p-1 shadow-[0_0_0_1px_rgba(251,191,36,0.12),0_25px_50px_-12px_rgba(0,0,0,0.65)] sm:p-1.5">
+          <div className="min-h-0 flex-1 overflow-hidden rounded-xl ring-1 ring-slate-700/80">
             {loading && <MapLoadingState />}
 
             {!loading && error && (
@@ -181,15 +258,17 @@ const SkateParksMap = ({ onParkSelect }) => {
                   disableDefaultUI={false}
                   className="h-full w-full"
                 >
+                  <MapCameraController parks={skateparks} focusedPark={selectedPark} />
+
                   {skateparks.map((park) => {
-                    const position = {
-                      lat: Number(park.locationLatitude),
-                      lng: Number(park.locationLongitude),
-                    };
+                    const position = parkLatLng(park);
                     const pinColors = SKATE_MARKER_COLORS;
                     const isSelected = selectedPark?.id === park.id;
+                    // Keep the busy SLC map clean — only show metro pins until a far park is focused
+                    if (!isSlcMetroPark(park) && selectedPark?.id !== park.id) {
+                      return null;
+                    }
 
-                    // Cloud Map ID → AdvancedMarker HTML content
                     if (googleMapsMapId) {
                       return (
                         <AdvancedMarker
@@ -203,7 +282,6 @@ const SkateParksMap = ({ onParkSelect }) => {
                       );
                     }
 
-                    // JS night styles → classic Marker with SVG skateboard icon
                     return (
                       <Marker
                         key={park.id}
@@ -217,10 +295,7 @@ const SkateParksMap = ({ onParkSelect }) => {
 
                   {selectedPark && (
                     <InfoWindow
-                      position={{
-                        lat: Number(selectedPark.locationLatitude),
-                        lng: Number(selectedPark.locationLongitude),
-                      }}
+                      position={parkLatLng(selectedPark)}
                       onCloseClick={handleInfoWindowClose}
                       pixelOffset={[0, -40]}
                     >
@@ -233,6 +308,12 @@ const SkateParksMap = ({ onParkSelect }) => {
           </div>
         </div>
       </section>
+
+      {selectedPark && (
+        <div className="shrink-0 pb-2">
+          <SelectedParkPanel park={selectedPark} onClose={handleInfoWindowClose} />
+        </div>
+      )}
     </div>
   );
 };

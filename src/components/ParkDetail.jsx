@@ -2,6 +2,7 @@
 import { useParams, Link } from 'react-router';
 import axios from 'axios';
 import { googleMapsApiKey } from '../config/env';
+import { getDirectionsUrl } from '../utils/directions';
 
 const ParkDetail = () => {
   const { id } = useParams();
@@ -230,7 +231,7 @@ const ParkDetail = () => {
               </div>
               <div className="pt-2">
                 <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${park.LocationLatitude},${park.LocationLongitude}`}
+                  href={getDirectionsUrl(park)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded inline-block transition-colors"

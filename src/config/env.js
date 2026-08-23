@@ -11,6 +11,7 @@ export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 export const apiRoutes = {
   getParks: import.meta.env.VITE_REL_GET_PARK || 'api/getparks',
+  getPark: import.meta.env.VITE_REL_GET_PARK_DETAIL || 'api/getpark/',
   addPark: import.meta.env.VITE_REL_ADD_PARK || 'api/addpark',
   getFeatures: import.meta.env.VITE_REL_GET_FEATURE || 'api/getfeatures',
   addFeature: import.meta.env.VITE_REL_ADD_FEATURE || 'api/addfeature',
