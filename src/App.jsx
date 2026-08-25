@@ -48,7 +48,7 @@ export default function App() {
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="mx-auto flex min-h-0 w-full max-w-[96rem] flex-1 flex-col px-3 py-2 sm:px-4">
+        <div className="mx-auto flex min-h-0 w-full max-w-[96rem] flex-1 flex-col px-3 pb-6 pt-2 sm:px-4 sm:pb-8">
           <Outlet />
         </div>
       </main>

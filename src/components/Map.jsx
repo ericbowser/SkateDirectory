@@ -247,7 +247,7 @@ const SkateParksMap = ({ onParkSelect }) => {
                 <Map
                   {...(googleMapsMapId
                     ? { mapId: googleMapsMapId }
-                    : { styles: NIGHT_MAP_STYLES })}
+                    : { styles: NIGHT_MAP_STYLES, colorScheme: 'DARK' })}
                   center={mapCenter}
                   zoom={mapZoom}
                   onCameraChanged={(ev) => {

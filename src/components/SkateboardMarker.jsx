@@ -98,7 +98,8 @@ const SkateboardMarker = ({ colors = SKATE_MARKER_COLORS, size = 28, selected = 
       height={size}
       viewBox="0 0 40 40"
       style={{
-        filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.85))',
+        filter:
+          'drop-shadow(0 0 3px rgba(0,0,0,0.95)) drop-shadow(0 2px 6px rgba(0,0,0,0.85))',
         transform: selected ? 'scale(1.3)' : 'scale(1)',
         transformOrigin: 'center bottom',
         transition: 'transform 0.15s ease-out',
