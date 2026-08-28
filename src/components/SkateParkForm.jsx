@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { FetchData, PostData } from "../../api/http";
-import { apiBaseUrl, apiRoutes } from '../config/env';
+import { FetchData, PostData } from "../services/http";
+import { apiUrl, apiRoutes } from '../config/env';
 
 const SkateparkForm = () => {
   const [formData, setFormData] = useState({
@@ -52,7 +52,7 @@ const SkateparkForm = () => {
         LastUpdatedDate: new Date().toISOString()
       };
 
-      const response = await PostData(`${apiBaseUrl}${apiRoutes.addPark}`, skateparkData);
+      const response = await PostData(apiUrl(apiRoutes.addPark), skateparkData);
 
       setMessage({
         text: `Successfully added ${response.ParkName} to the database!`,

@@ -7,8 +7,8 @@ import {
   InfoWindow,
   useMap,
 } from '@vis.gl/react-google-maps';
-import { FetchData } from '../../api/http';
-import { apiBaseUrl, apiRoutes, googleMapsApiKey, googleMapsMapId } from '../config/env';
+import { FetchData } from '../services/http';
+import { apiUrl, apiRoutes, googleMapsApiKey, googleMapsMapId } from '../config/env';
 import SkateboardMarker, { buildSkateboardIconUrl, SKATE_MARKER_COLORS } from './SkateboardMarker';
 import QuickSearch from './QuickSearch';
 import SelectedParkPanel from './SelectedParkPanel';
@@ -131,7 +131,7 @@ const SkateParksMap = ({ onParkSelect }) => {
     const fetchParks = async () => {
       setLoading(true);
       try {
-        const response = await FetchData(`${apiBaseUrl}${apiRoutes.getParks}`);
+        const response = await FetchData(apiUrl(apiRoutes.getParks));
         if (!Array.isArray(response)) {
           throw new Error(`Expected park list array, got ${typeof response}`);
         }

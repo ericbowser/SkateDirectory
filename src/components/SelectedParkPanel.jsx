@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FetchData } from '../../api/http';
-import { apiBaseUrl, apiRoutes } from '../config/env';
+import { FetchData } from '../services/http';
+import { apiUrl, apiRoutes } from '../config/env';
 import { getDirectionsUrl } from '../utils/directions';
 
 /**
@@ -32,7 +32,7 @@ const SelectedParkPanel = ({ park, onClose }) => {
       });
 
       try {
-        const response = await FetchData(`${apiBaseUrl}${apiRoutes.getPark}${park.id}`);
+        const response = await FetchData(`${apiUrl(apiRoutes.getPark)}${park.id}`);
         if (!cancelled && response) {
           setDetails(response);
         }

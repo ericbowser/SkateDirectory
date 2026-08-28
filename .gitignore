@@ -1,11 +1,14 @@
-
 .env*
 .flaskenv*
+!.env.example
+!.env.production
 !.env.project
 !.env.vault
 
-node_modules/
+# Legacy webpack config — do not deploy
+env.json
 
+node_modules/
 .DS_Store
 .idea  
 

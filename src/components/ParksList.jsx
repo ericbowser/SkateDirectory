@@ -1,8 +1,8 @@
 ﻿import React, {useEffect, useState} from 'react';
-import {FetchData} from "../../api/http";
+import {FetchData} from "../services/http";
 import {AgGridReact} from 'ag-grid-react';
 import myTheme from "../styles/ag-grid-theme-builder";
-import { apiBaseUrl, apiRoutes } from '../config/env';
+import { apiUrl, apiRoutes } from '../config/env';
 
 const WebsiteLinkRenderer = params => {
     if (params.value) {
@@ -29,7 +29,7 @@ const ParksList = () => {
   const fetchParks = async () => {
     setLoading(true);
     try {
-      const response = await FetchData(`${apiBaseUrl}${apiRoutes.getParks}`);
+      const response = await FetchData(apiUrl(apiRoutes.getParks));
       if (!Array.isArray(response)) {
         throw new Error(`Expected park list array, got ${typeof response}`);
       }

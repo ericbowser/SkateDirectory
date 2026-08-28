@@ -27,6 +27,13 @@ export default defineConfig(({ mode }) => {
       host: env.HOST || 'localhost',
       port: Number(env.PORT) || 8006,
       https,
+      // Proxy /api to Node backend — avoids mixed-content (https page → http://3001)
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:3001',
+          changeOrigin: true,
+        },
+      },
       // Vite can't always auto-infer wss when https is a custom cert object (vs. `https: true`).
       // Force it explicitly so HMR's websocket doesn't try ws:// against an https:// page.
       hmr: https
@@ -41,6 +48,12 @@ export default defineConfig(({ mode }) => {
       host: env.HOST || 'localhost',
       port: Number(env.PORT) || 8006,
       https,
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:3001',
+          changeOrigin: true,
+        },
+      },
     },
   };
 });

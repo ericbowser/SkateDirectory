@@ -33,9 +33,10 @@
 LICENSE
 README.md
 
-.env*
-.flaskenv*
-!.env.project
-!.env.vault
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.production
+**/env.json
 
 ssl/

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://localhost:8006/sitemap.xml
+Sitemap: https://skatedir.com/sitemap.xml

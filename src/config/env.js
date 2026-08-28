@@ -1,18 +1,24 @@
 // Browser-safe env values loaded by Vite from .env (see envPrefix in vite.config.mjs).
-// Google Maps uses an API key — not OAuth client ID/secret.
 
 export const googleMapsApiKey =
   import.meta.env.GOOGLE_MAPS_JS_KEY || import.meta.env.GOOGLE_MAPS_API_KEY || '';
 
 export const googleMapsMapId = import.meta.env.GOOGLE_MAPS_MAP_ID || '';
 
-// VITE_API_BASE_URL — do not use BASE_URL (reserved by Vite as "/")
-export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+/** Build absolute API path — always root-relative so /parks route doesn't break fetches */
+export function apiUrl(route) {
+  const path = route.startsWith('/') ? route : `/${route}`;
+  const base = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+  return base ? `${base}${path}` : path;
+}
 
 export const apiRoutes = {
-  getParks: import.meta.env.VITE_REL_GET_PARK || 'api/getparks',
-  getPark: import.meta.env.VITE_REL_GET_PARK_DETAIL || 'api/getpark/',
-  addPark: import.meta.env.VITE_REL_ADD_PARK || 'api/addpark',
-  getFeatures: import.meta.env.VITE_REL_GET_FEATURE || 'api/getfeatures',
-  addFeature: import.meta.env.VITE_REL_ADD_FEATURE || 'api/addfeature',
+  getParks: import.meta.env.VITE_REL_GET_PARK || '/api/getparks',
+  getPark: import.meta.env.VITE_REL_GET_PARK_DETAIL || '/api/getpark/',
+  addPark: import.meta.env.VITE_REL_ADD_PARK || '/api/addpark',
+  getFeatures: import.meta.env.VITE_REL_GET_FEATURE || '/api/getfeatures',
+  addFeature: import.meta.env.VITE_REL_ADD_FEATURE || '/api/addfeature',
 };
+
+// Deprecated — use apiUrl(apiRoutes.getParks) instead
+export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';

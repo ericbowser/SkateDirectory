@@ -1,6 +1,6 @@
 ﻿import React, {useEffect, useState} from "react";
-import {FetchData, PostData} from "../../api/http";
-import { apiBaseUrl, apiRoutes } from '../config/env';
+import {FetchData, PostData} from "../services/http";
+import { apiUrl, apiRoutes } from '../config/env';
 
 const Features = () => {
   const [features, setFeatures] = useState(null);
@@ -45,7 +45,7 @@ const Features = () => {
 
     try {
       setLoading(true);
-      const response = await PostData(`${apiBaseUrl}${apiRoutes.getFeatures}`, newFeature);
+      const response = await PostData(apiUrl(apiRoutes.addFeature), newFeature);
 
       // Add new feature to available features
       setAvailableFeatures(prev => [...prev, response.data]);
@@ -73,7 +73,7 @@ const Features = () => {
     }
   };
   async function getFeatures() {
-    const features = await FetchData(`${apiBaseUrl}${apiRoutes.getFeatures}`);
+    const features = await FetchData(apiUrl(apiRoutes.getFeatures));
     if (features && features.length > 0) {
       setFeatures(features);
       setLoading(false);

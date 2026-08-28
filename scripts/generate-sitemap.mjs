@@ -6,7 +6,11 @@ import dotenv from 'dotenv';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 
+const modeArg = process.argv.find((arg) => arg.startsWith('--mode='));
+const mode = modeArg?.split('=')[1] || process.env.NODE_ENV || 'development';
+
 dotenv.config({ path: path.join(root, '.env') });
+dotenv.config({ path: path.join(root, `.env.${mode}`), override: true });
 
 const siteUrl = (
   process.env.VITE_SITE_URL ||
