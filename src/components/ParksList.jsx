@@ -35,7 +35,7 @@ const ParksList = () => {
       }
       setParks(response);
     } catch (err) {
-      setError('Failed to load skatepark data. Please try again later.');
+      setError(err.message || 'Failed to load skatepark data. Please try again later.');
       console.error('Error fetching skateparks:', err);
     } finally {
       setLoading(false);

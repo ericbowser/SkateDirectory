@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "typecheck": "react-router typegen && tsc",
     "tail": "npx tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css",
-    "tail:watch": "npx tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css --watch"
+    "tail:watch": "npx tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css --watch",
+    "clean": "node -e \"const fs=require('fs'); fs.rmSync('node_modules',{recursive:true,force:true}); fs.rmSync('package-lock.json',{force:true});\""
   },
   "dependencies": {
     "@google/maps": "^1.1.3",
