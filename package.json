@@ -2,8 +2,10 @@
   "name": "skatedirectory-front",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n api,web -c blue,green \"npm run dev --prefix ../SkateDirectoryApi\" \"vite\"",
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "node --watch server.js",
     "dev:web": "vite",
+    "start:api": "node server.js",
     "sitemap": "node scripts/generate-sitemap.mjs",
     "prebuild": "node scripts/generate-sitemap.mjs --mode=production",
     "build": "vite build",
