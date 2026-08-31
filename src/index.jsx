@@ -2,8 +2,8 @@
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import ParksList from "./components/ParksList";
 import SkateParkForm from "./components/SkateParkForm";
+import SuggestPark from "./components/SuggestPark";
 import Map from "./components/Map";
 import './styles/input.css';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
@@ -20,8 +20,8 @@ let router = createBrowserRouter([
         Component: Map
       },
       {
-        path: "parks",
-        Component: ParksList
+        path: "suggest-park",
+        Component: SuggestPark
       },
       {
         path: "skatepark-form",

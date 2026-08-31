@@ -4,7 +4,6 @@ import {
   Map,
   AdvancedMarker,
   Marker,
-  InfoWindow,
   useMap,
 } from '@vis.gl/react-google-maps';
 import { FetchData } from '../services/http';
@@ -13,23 +12,12 @@ import SkateboardMarker, { buildSkateboardIconUrl, SKATE_MARKER_COLORS } from '.
 import QuickSearch from './QuickSearch';
 import SelectedParkPanel from './SelectedParkPanel';
 import { NIGHT_MAP_STYLES } from '../config/mapLayout';
-import { openDirections } from '../utils/directions';
+import { downloadParksCsv } from '../utils/exportParksCsv';
 
-/** Salt Lake metro default — Wasatch Front corridor */
-const DEFAULT_CENTER = { lat: 40.72, lng: -111.89 };
-const DEFAULT_ZOOM = 10;
-
-/**
- * Initial map focus: Salt Lake / Wasatch Front metro only.
- * Far parks (Wendover, Tooele, Heber, Park City, …) stay searchable.
- */
-function isSlcMetroPark(park) {
-  const lat = Number(park.locationLatitude ?? park.LocationLatitude);
-  const lng = Number(park.locationLongitude ?? park.LocationLongitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
-  // West of Tooele / east of Heber–Park City out of initial view
-  return lng >= -112.12 && lng <= -111.55 && lat >= 40.10 && lat <= 41.35;
-}
+const FOCUS_ZOOM = 15;
+const OVERVIEW_MIN_ZOOM = 7;
+const OVERVIEW_MAX_ZOOM = 10;
+const FIT_PADDING = { top: 40, right: 40, bottom: 64, left: 40 };
 
 function parkLatLng(park) {
   return {
@@ -38,84 +26,100 @@ function parkLatLng(park) {
   };
 }
 
-/**
- * Fit + restrict to SLC metro on load. When a park is focused (search/click),
- * clear the restriction and fly to that park.
- */
-function MapCameraController({ parks, focusedPark }) {
+function parksWithCoords(parks) {
+  return (parks ?? []).filter((park) => {
+    const { lat, lng } = parkLatLng(park);
+    return Number.isFinite(lat) && Number.isFinite(lng);
+  });
+}
+
+function boundsForParks(parks) {
+  const bounds = new window.google.maps.LatLngBounds();
+  for (const park of parks) {
+    bounds.extend(parkLatLng(park));
+  }
+  return bounds;
+}
+
+function clampOverviewZoom(map, parkCount) {
+  const zoom = map.getZoom();
+  if (zoom == null) return;
+
+  if (parkCount === 1) {
+    map.setZoom(Math.min(zoom, 14));
+    return;
+  }
+
+  const clamped = Math.max(OVERVIEW_MIN_ZOOM, Math.min(zoom, OVERVIEW_MAX_ZOOM));
+  if (clamped !== zoom) {
+    map.setZoom(clamped);
+  }
+}
+
+function fitMapToParks(map, parks, padding = FIT_PADDING) {
+  const valid = parksWithCoords(parks);
+  if (!valid.length) return;
+
+  const mapEl = map.getDiv?.();
+  if (mapEl && mapEl.offsetHeight < 80) return;
+
+  const bounds = boundsForParks(valid);
+  map.fitBounds(bounds, padding);
+
+  window.google.maps.event.addListenerOnce(map, 'idle', () => {
+    clampOverviewZoom(map, valid.length);
+  });
+}
+
+function MapCameraController({ parks, focusedPark, resetKey }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!map || !parks?.length || !window.google?.maps) return;
+    if (!map || !window.google?.maps) return;
 
-    // Search / selection — jump to that park (even if outside SLC)
+    const valid = parksWithCoords(parks);
+    if (!valid.length) return;
+
     if (focusedPark) {
       const { lat, lng } = parkLatLng(focusedPark);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-      map.setOptions({ restriction: null });
       map.panTo({ lat, lng });
-      map.setZoom(14);
+      map.setZoom(FOCUS_ZOOM);
       return;
     }
 
-    // Default / cleared — SLC metro overview
-    const bounds = new window.google.maps.LatLngBounds();
-    let count = 0;
-    for (const park of parks) {
-      if (!isSlcMetroPark(park)) continue;
-      const { lat, lng } = parkLatLng(park);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      bounds.extend({ lat, lng });
-      count += 1;
-    }
-    if (count === 0) return;
+    const runOverviewFit = () => fitMapToParks(map, valid);
 
-    const sw = bounds.getSouthWest();
-    const ne = bounds.getNorthEast();
-    const latPad = Math.max(ne.lat() - sw.lat(), 0.05) * 0.04;
-    const lngPad = Math.max(ne.lng() - sw.lng(), 0.05) * 0.04;
-
-    map.setOptions({
-      restriction: {
-        latLngBounds: {
-          north: ne.lat() + latPad,
-          south: sw.lat() - latPad,
-          east: ne.lng() + lngPad,
-          west: sw.lng() - lngPad,
-        },
-        strictBounds: true,
-      },
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(runOverviewFit);
     });
-    map.fitBounds(bounds, { top: 8, right: 8, bottom: 8, left: 8 });
-  }, [map, parks, focusedPark]);
+
+    const mapEl = map.getDiv?.();
+    let resizeObserver;
+    let resizeTimer;
+    if (mapEl && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        if (focusedPark) return;
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(runOverviewFit, 120);
+      });
+      resizeObserver.observe(mapEl);
+    }
+
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(resizeTimer);
+      resizeObserver?.disconnect();
+    };
+  }, [map, parks, focusedPark, resetKey]);
 
   return null;
 }
 
 const MapLoadingState = () => (
-  <div className="flex h-full items-center justify-center bg-slate-800 text-slate-300">
-    <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-amber-400" />
-    <p className="ml-4">Loading skate parks...</p>
-  </div>
-);
-
-const ParkInfoContent = ({ park }) => (
-  <div className="max-w-xs rounded-2xl border border-slate-700 bg-slate-800 p-3.5 font-sans text-slate-100 shadow-xl">
-    <h3 className="m-0 mb-1.5 font-semibold text-slate-100">{park.parkName}</h3>
-    <p className="m-0 mb-1.5 text-sm text-slate-400">
-      <span className="font-medium text-slate-300">Address:</span> {park.parkAddress}
-    </p>
-    {park.parkDescription && (
-      <p className="m-0 mb-2.5 text-sm text-slate-400">{park.parkDescription}</p>
-    )}
-    <button
-      type="button"
-      className="cursor-pointer rounded-xl border-none bg-amber-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-500"
-      onClick={() => openDirections(park)}
-    >
-      Get Directions
-    </button>
+  <div className="flex h-full items-center justify-center bg-slate-950 text-slate-400">
+    <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-amber-400" />
+    <p className="ml-3 text-sm">Loading parks…</p>
   </div>
 );
 
@@ -124,8 +128,9 @@ const SkateParksMap = ({ onParkSelect }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedPark, setSelectedPark] = useState(null);
-  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
-  const [mapZoom, setMapZoom] = useState(DEFAULT_ZOOM);
+  const [mapResetKey, setMapResetKey] = useState(0);
+  const [initialCenter] = useState({ lat: 40.65, lng: -112.35 });
+  const [initialZoom] = useState(8);
 
   useEffect(() => {
     const fetchParks = async () => {
@@ -149,8 +154,6 @@ const SkateParksMap = ({ onParkSelect }) => {
   const focusPark = useCallback(
     (park) => {
       setSelectedPark(park);
-      setMapCenter(parkLatLng(park));
-      setMapZoom(14);
       onParkSelect?.(park);
     },
     [onParkSelect]
@@ -163,82 +166,88 @@ const SkateParksMap = ({ onParkSelect }) => {
     [focusPark]
   );
 
-  const handleInfoWindowClose = useCallback(() => {
+  const handleBackToMap = useCallback(() => {
     setSelectedPark(null);
+    setMapResetKey((k) => k + 1);
   }, []);
 
-  const slcCount = skateparks.filter(isSlcMetroPark).length;
+  const handleDownloadCsv = useCallback(() => {
+    if (!skateparks.length) return;
+    downloadParksCsv(skateparks);
+  }, [skateparks]);
+
+  const parkCount = parksWithCoords(skateparks).length;
+  const showingDetails = Boolean(selectedPark);
 
   return (
-    <div
-      className={`flex min-h-0 w-full flex-1 flex-col gap-2 ${
-        selectedPark ? 'overflow-y-auto' : 'overflow-hidden'
-      }`}
-    >
-      <section className="shrink-0">
-        <h1 className="mb-1 text-center text-xl font-bold tracking-tight text-slate-100 sm:text-2xl">
-          Where are you skating?
-        </h1>
-        <p className="mx-auto mb-2 max-w-xl text-center text-xs text-slate-500">
-          SLC metro on the map — search any Utah park to jump there.
-        </p>
-        <div className="mx-auto max-w-2xl">
-          <QuickSearch parks={skateparks} onResultClick={focusPark} />
-        </div>
-      </section>
-
+    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 overflow-x-hidden">
+      {/* Search — dropdown must sit above the map */}
       <section
-        className={`flex min-h-0 flex-col ${
-          selectedPark ? 'h-[min(52dvh,420px)] shrink-0' : 'flex-1'
-        }`}
+        aria-label="Search skateparks"
+        className="relative z-50 min-w-0 shrink-0 space-y-2 overflow-visible"
       >
-        <div className="mb-1 flex shrink-0 items-end justify-between gap-3 px-1">
-          <p className="text-xs text-slate-500">
-            {loading
-              ? 'Loading parks…'
-              : selectedPark
-                ? `Focused: ${selectedPark.parkName}`
-                : `${slcCount} SLC-area parks in view`}
-          </p>
-          {selectedPark && (
+        <QuickSearch
+          parks={skateparks}
+          onResultClick={focusPark}
+          onDownloadCsv={handleDownloadCsv}
+        />
+        {!loading && skateparks.length > 0 && (
+          <div className="flex justify-end px-0.5">
             <button
               type="button"
-              onClick={handleInfoWindowClose}
-              className="text-xs text-slate-400 underline-offset-2 hover:text-amber-400 hover:underline"
+              onClick={handleDownloadCsv}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-900/60 px-3 py-1.5 text-xs font-medium text-amber-400/90 transition-colors hover:border-amber-500/30 hover:bg-slate-800 hover:text-amber-300"
             >
-              Back to SLC map
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              Download {skateparks.length} parks (CSV)
             </button>
-          )}
-        </div>
+          </div>
+        )}
+      </section>
 
-        <div className="flex min-h-0 flex-1 flex-col rounded-2xl border-2 border-slate-600/90 bg-slate-950 p-1 shadow-[0_0_0_1px_rgba(251,191,36,0.12),0_25px_50px_-12px_rgba(0,0,0,0.65)] sm:p-1.5">
-          <div className="min-h-0 flex-1 overflow-hidden rounded-xl ring-1 ring-slate-700/80">
+      {/* Map — fills page; hidden (not unmounted) while viewing park details */}
+      <section
+        aria-label="Map of skateparks"
+        aria-hidden={showingDetails}
+        className={`relative z-0 min-h-0 min-w-0 flex-1 ${showingDetails ? 'hidden' : ''}`}
+      >
+          <div className="pointer-events-none absolute left-3 top-3 z-10">
+            <span className="rounded-md bg-slate-950/85 px-2 py-0.5 text-[11px] text-slate-400 backdrop-blur-sm">
+              {loading ? 'Loading…' : `${parkCount} parks`}
+            </span>
+          </div>
+
+          <div className="h-full overflow-hidden rounded-xl opacity-50 ring-1 ring-slate-700/60">
             {loading && <MapLoadingState />}
 
             {!loading && error && (
               <div
-                className="flex h-full items-center justify-center bg-slate-800 px-4 py-3 text-rose-400"
+                className="flex h-full items-center justify-center bg-slate-950 px-4 text-sm text-rose-400"
                 role="alert"
               >
-                <div>
-                  <strong className="font-bold">Error:</strong>
-                  <span className="sm:inline"> {error}</span>
-                </div>
+                {error}
               </div>
             )}
 
             {!loading && !error && !googleMapsApiKey && (
               <div
-                className="flex h-full items-center justify-center bg-slate-800 px-4 py-3 text-rose-400"
+                className="flex h-full items-center justify-center bg-slate-950 px-4 text-sm text-rose-400"
                 role="alert"
               >
-                <div>
-                  <strong className="font-bold">Google Maps key missing.</strong>
-                  <span className="sm:inline">
-                    {' '}
-                    Set GOOGLE_MAPS_JS_KEY in SkateDirectory/.env and restart Vite.
-                  </span>
-                </div>
+                Set GOOGLE_MAPS_JS_KEY in .env and restart Vite.
               </div>
             )}
 
@@ -248,26 +257,24 @@ const SkateParksMap = ({ onParkSelect }) => {
                   {...(googleMapsMapId
                     ? { mapId: googleMapsMapId }
                     : { styles: NIGHT_MAP_STYLES, colorScheme: 'DARK' })}
-                  center={mapCenter}
-                  zoom={mapZoom}
-                  onCameraChanged={(ev) => {
-                    setMapCenter(ev.detail.center);
-                    setMapZoom(ev.detail.zoom);
-                  }}
+                  defaultCenter={initialCenter}
+                  defaultZoom={initialZoom}
                   gestureHandling="greedy"
                   disableDefaultUI={false}
+                  zoomControl
+                  mapTypeControl={false}
+                  streetViewControl={false}
+                  fullscreenControl
                   className="h-full w-full"
                 >
-                  <MapCameraController parks={skateparks} focusedPark={selectedPark} />
+                  <MapCameraController
+                    parks={skateparks}
+                    focusedPark={null}
+                    resetKey={mapResetKey}
+                  />
 
-                  {skateparks.map((park) => {
+                  {parksWithCoords(skateparks).map((park) => {
                     const position = parkLatLng(park);
-                    const pinColors = SKATE_MARKER_COLORS;
-                    const isSelected = selectedPark?.id === park.id;
-                    // Keep the busy SLC map clean — only show metro pins until a far park is focused
-                    if (!isSlcMetroPark(park) && selectedPark?.id !== park.id) {
-                      return null;
-                    }
 
                     if (googleMapsMapId) {
                       return (
@@ -277,7 +284,7 @@ const SkateParksMap = ({ onParkSelect }) => {
                           onClick={() => handleMarkerClick(park)}
                           title={park.parkName}
                         >
-                          <SkateboardMarker colors={pinColors} selected={isSelected} />
+                          <SkateboardMarker colors={SKATE_MARKER_COLORS} selected={false} />
                         </AdvancedMarker>
                       );
                     }
@@ -288,31 +295,48 @@ const SkateParksMap = ({ onParkSelect }) => {
                         position={position}
                         onClick={() => handleMarkerClick(park)}
                         title={park.parkName}
-                        icon={buildSkateboardIconUrl(pinColors, { selected: isSelected })}
+                        icon={buildSkateboardIconUrl(SKATE_MARKER_COLORS, { selected: false })}
                       />
                     );
                   })}
-
-                  {selectedPark && (
-                    <InfoWindow
-                      position={parkLatLng(selectedPark)}
-                      onCloseClick={handleInfoWindowClose}
-                      pixelOffset={[0, -40]}
-                    >
-                      <ParkInfoContent park={selectedPark} />
-                    </InfoWindow>
-                  )}
                 </Map>
               </APIProvider>
             )}
           </div>
-        </div>
       </section>
 
-      {selectedPark && (
-        <div className="shrink-0 pb-2">
-          <SelectedParkPanel park={selectedPark} onClose={handleInfoWindowClose} />
-        </div>
+      {/* Details — replaces visible map when a park is selected */}
+      {showingDetails && (
+        <section
+          id="park-details"
+          aria-label="Park details"
+          className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden"
+        >
+          <button
+            type="button"
+            onClick={handleBackToMap}
+            className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-slate-600 bg-slate-800/90 px-4 py-2 text-sm font-medium text-amber-400 transition-colors hover:border-amber-500/40 hover:bg-slate-800 hover:text-amber-300"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to map
+          </button>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-1">
+            <SelectedParkPanel
+              park={selectedPark}
+              onClose={handleBackToMap}
+              showCloseButton={false}
+            />
+          </div>
+        </section>
       )}
     </div>
   );

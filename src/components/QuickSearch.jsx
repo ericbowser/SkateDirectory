@@ -1,5 +1,4 @@
 ﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 
 /** Lowercase, strip punctuation, collapse whitespace */
 function normalize(value = '') {
@@ -84,7 +83,7 @@ function scorePark(park, query) {
   return 20;
 }
 
-const QuickSearch = ({ parks = [], onResultClick }) => {
+const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -191,14 +190,14 @@ const QuickSearch = ({ parks = [], onResultClick }) => {
   const queryActive = searchTerm.trim().length >= 1;
 
   return (
-    <div className="relative z-40 w-full">
+    <div className="relative isolate z-50 w-full">
       <label htmlFor="park-search" className="sr-only">
         Search skate parks
       </label>
       <div className="relative group">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5">
+        <div className={`pointer-events-none absolute inset-y-0 left-0 flex items-center ${compact ? 'pl-3' : 'pl-5'}`}>
           <svg
-            className="h-6 w-6 text-slate-500 group-focus-within:text-amber-400 transition-colors"
+            className={`${compact ? 'h-4 w-4' : 'h-6 w-6'} text-slate-500 transition-colors group-focus-within:text-amber-400`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -221,14 +220,18 @@ const QuickSearch = ({ parks = [], onResultClick }) => {
           onKeyDown={handleKeyDown}
           onFocus={() => queryActive && setShowResults(true)}
           onBlur={handleBlur}
-          placeholder="Search parks by name, city, or address…"
+          placeholder="Search skateparks…"
           autoComplete="off"
-          className="w-full rounded-2xl border border-slate-600/80 bg-slate-800/90 py-4 pl-14 pr-5 text-lg text-slate-100 placeholder:text-slate-500 shadow-lg shadow-black/30 outline-none transition-all focus:border-amber-400/70 focus:ring-4 focus:ring-amber-400/15"
+          className={
+            compact
+              ? 'w-full rounded-lg border border-slate-700/80 bg-slate-950/70 py-2.5 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 shadow-lg shadow-black/20 outline-none backdrop-blur-sm transition-colors focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15'
+              : 'w-full rounded-2xl border border-slate-700/80 bg-slate-950/70 py-4 pl-14 pr-5 text-lg text-slate-100 placeholder:text-slate-500 shadow-lg shadow-black/25 outline-none backdrop-blur-sm transition-colors focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15'
+          }
         />
       </div>
 
       {showResults && queryActive && parks.length === 0 && (
-        <div className="absolute z-50 mt-2 w-full rounded-2xl border border-slate-700 bg-slate-800 p-4 text-center shadow-2xl">
+        <div className="absolute z-[60] mt-2 w-full rounded-2xl border border-slate-700 bg-slate-800 p-4 text-center shadow-2xl">
           <p className="text-slate-300">Park list not loaded yet</p>
           <p className="mt-1 text-sm text-slate-500">
             Wait for the map to finish loading, then try again
@@ -239,7 +242,7 @@ const QuickSearch = ({ parks = [], onResultClick }) => {
       {showResults && queryActive && parks.length > 0 && results.length > 0 && (
         <div
           ref={resultsRef}
-          className="absolute z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-2xl border border-slate-700 bg-slate-800 shadow-2xl shadow-black/50"
+          className="absolute z-[60] mt-2 max-h-96 w-full overflow-y-auto rounded-2xl border border-slate-700 bg-slate-800 shadow-2xl shadow-black/50"
           role="listbox"
         >
           {results.map((park, index) => (
@@ -269,19 +272,26 @@ const QuickSearch = ({ parks = [], onResultClick }) => {
             </button>
           ))}
 
-          <div className="border-t border-slate-700 bg-slate-900/60 px-4 py-2">
-            <Link
-              to={`/parks?search=${encodeURIComponent(searchTerm)}`}
-              className="block text-center text-sm font-medium text-amber-400 hover:text-amber-300"
-            >
-              Browse all parks
-            </Link>
-          </div>
+          {onDownloadCsv && parks.length > 0 && (
+            <div className="border-t border-slate-700 bg-slate-900/60 px-4 py-2">
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onDownloadCsv();
+                  setShowResults(false);
+                }}
+                className="block w-full text-center text-sm font-medium text-amber-400 hover:text-amber-300"
+              >
+                Download full park list (CSV)
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {showResults && queryActive && parks.length > 0 && results.length === 0 && (
-        <div className="absolute z-50 mt-2 w-full rounded-2xl border border-slate-700 bg-slate-800 p-4 text-center shadow-2xl">
+        <div className="absolute z-[60] mt-2 w-full rounded-2xl border border-slate-700 bg-slate-800 p-4 text-center shadow-2xl">
           <p className="text-slate-300">No parks found for “{searchTerm}”</p>
           <p className="mt-1 text-sm text-slate-500">
             Try a city (Ogden, Provo) or part of a name (Fairmont, Vans)

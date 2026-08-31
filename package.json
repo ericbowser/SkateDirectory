@@ -7,7 +7,7 @@
     "dev:web": "vite",
     "start:api": "node server.js",
     "sitemap": "node scripts/generate-sitemap.mjs",
-    "prebuild": "node scripts/generate-sitemap.mjs --mode=production",
+    "prebuild": "node scripts/generate-sitemap.mjs --mode=production && node scripts/copy-skate-assets.mjs",
     "build": "vite build",
     "build:prod": "npm run build",
     "build:dev": "vite build --mode development",
@@ -23,6 +23,7 @@
     "@googlemaps/google-maps-services-js": "^3.4.2",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@googlemaps/markerclusterer": "^2.6.2",
+    "@react-three/fiber": "^9.7.0",
     "@vis.gl/react-google-maps": "^1.5.5",
     "ag-grid-community": "^34.1.2",
     "ag-grid-react": "^34.1.2",
@@ -37,7 +38,8 @@
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.0",
     "react-router": "^7.6.1",
-    "react-router-dom": "^7.6.1"
+    "react-router-dom": "^7.6.1",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.3",

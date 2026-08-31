@@ -18,7 +18,11 @@ export const apiRoutes = {
   addPark: import.meta.env.VITE_REL_ADD_PARK || '/api/addpark',
   getFeatures: import.meta.env.VITE_REL_GET_FEATURE || '/api/getfeatures',
   addFeature: import.meta.env.VITE_REL_ADD_FEATURE || '/api/addfeature',
+  suggestPark: import.meta.env.VITE_REL_SUGGEST_PARK || '/api/suggest-park',
 };
+
+/** When true, show the legacy direct-add park form (local/admin only). */
+export const parkAdminEnabled = import.meta.env.VITE_ENABLE_PARK_ADMIN === 'true';
 
 // Deprecated — use apiUrl(apiRoutes.getParks) instead
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';

@@ -1,6 +1,7 @@
-﻿import React, { useState, useEffect } from 'react';
-import { FetchData, PostData } from "../services/http";
-import { apiUrl, apiRoutes } from '../config/env';
+﻿import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { PostData } from '../services/http';
+import { apiUrl, apiRoutes, parkAdminEnabled } from '../config/env';
 
 const SkateparkForm = () => {
   const [formData, setFormData] = useState({
@@ -86,8 +87,19 @@ const SkateparkForm = () => {
   };
 
 
+  if (!parkAdminEnabled) {
+    return <Navigate to="/suggest-park" replace />;
+  }
+
   return (
     <div className="skatepark-form-container max-w-2xl mx-auto">
+      <p className="mb-4 rounded-xl border border-amber-700/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-200/90">
+        Admin only — direct database insert. Public users should use{' '}
+        <a href="/suggest-park" className="font-medium text-amber-400 underline">
+          Suggest a park
+        </a>
+        .
+      </p>
       <h2 className="text-2xl font-bold mb-6">Add New Skatepark</h2>
 
       {message.text && (

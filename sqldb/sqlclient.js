@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { getPhotosForParkName, mergePhotos } = require('../skateAssets');
 
 // Shared Postgres instance (same box as the other sites) — this app gets its own
 // schema so `search_path` scopes every unqualified table name to `skate`.
@@ -49,11 +50,19 @@ function mapFeature(row) {
 }
 
 function mapPhoto(row) {
+  const url = row.external_url || row.storage_path;
   return {
     id: row.id,
-    photoUrl: row.photo_url,
+    slug: row.slug,
+    photoUrl: url,
+    url,
+    filePath: url,
     caption: row.caption,
+    altText: row.alt_text,
+    sortOrder: row.sort_order,
+    isPrimary: row.is_primary,
     uploadedAt: row.uploaded_at,
+    source: 'database',
   };
 }
 
@@ -64,6 +73,27 @@ async function GetParks() {
   return rows.map(mapPark);
 }
 
+async function getDbPhotosForPark(parkId) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT pp.id, pp.caption, pp.sort_order, pp.is_primary, pp.uploaded_at,
+              ph.slug, ph.storage_path, ph.external_url, ph.alt_text
+       FROM park_photo pp
+       JOIN photo ph ON ph.id = pp.photo_id
+       WHERE pp.park_id = $1
+       ORDER BY pp.is_primary DESC, pp.sort_order, pp.uploaded_at`,
+      [parkId]
+    );
+    return rows.map(mapPhoto);
+  } catch (err) {
+    // Normalized photo tables not migrated yet — filesystem assets still work
+    if (err.code === '42P01' || err.code === '42703') {
+      return [];
+    }
+    throw err;
+  }
+}
+
 async function GetParkById(id) {
   const parkResult = await pool.query(
     `SELECT ${PARK_COLUMNS} FROM park WHERE id = $1`,
@@ -71,7 +101,9 @@ async function GetParkById(id) {
   );
   if (parkResult.rows.length === 0) return null;
 
-  const [featuresResult, photosResult] = await Promise.all([
+  const parkRow = parkResult.rows[0];
+
+  const [featuresResult, dbPhotos] = await Promise.all([
     pool.query(
       `SELECT pf.id, pf.feature_name, pf.feature_category, ft.feature_type_id AS feature_type
        FROM park_feature_mapping pfm
@@ -81,17 +113,13 @@ async function GetParkById(id) {
        ORDER BY pf.feature_name`,
       [id]
     ),
-    pool.query(
-      `SELECT id, photo_url, caption, uploaded_at
-       FROM park_photo WHERE park_id = $1 ORDER BY uploaded_at`,
-      [id]
-    ),
+    getDbPhotosForPark(id),
   ]);
 
   return {
-    ...mapPark(parkResult.rows[0]),
+    ...mapPark(parkRow),
     features: featuresResult.rows.map(mapFeature),
-    photos: photosResult.rows.map(mapPhoto),
+    photos: mergePhotos(dbPhotos, getPhotosForParkName(parkRow.park_name)),
   };
 }
 

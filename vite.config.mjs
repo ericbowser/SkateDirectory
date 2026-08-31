@@ -33,6 +33,10 @@ export default defineConfig(({ mode }) => {
           target: 'http://127.0.0.1:3001',
           changeOrigin: true,
         },
+        '/skate_assets': {
+          target: 'http://127.0.0.1:3001',
+          changeOrigin: true,
+        },
       },
       // Vite can't always auto-infer wss when https is a custom cert object (vs. `https: true`).
       // Force it explicitly so HMR's websocket doesn't try ws:// against an https:// page.
@@ -50,6 +54,10 @@ export default defineConfig(({ mode }) => {
       https,
       proxy: {
         '/api': {
+          target: 'http://127.0.0.1:3001',
+          changeOrigin: true,
+        },
+        '/skate_assets': {
           target: 'http://127.0.0.1:3001',
           changeOrigin: true,
         },

@@ -19,8 +19,7 @@ const siteUrl = (
 
 const routes = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
-  { path: '/parks', changefreq: 'weekly', priority: '0.8' },
-  { path: '/skatepark-form', changefreq: 'monthly', priority: '0.5' },
+  { path: '/suggest-park', changefreq: 'monthly', priority: '0.6' },
 ];
 
 const lastmod = new Date().toISOString().slice(0, 10);
