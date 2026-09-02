@@ -42,13 +42,13 @@ export default function App() {
 
                 <span className="text-base font-semibold text-slate-100 sm:text-lg">
 
-                  SLC <span className="text-amber-400">Skate Directory</span>
+                  <span className="text-amber-400">Skate Directory</span>
 
                 </span>
 
                 <span className="hidden border-l border-slate-700 pl-3 text-xs text-slate-500 lg:block">
 
-                  Salt Lake City &middot; Find Your Next Session
+                  Find Your Next Session
 
                 </span>
 
@@ -153,7 +153,7 @@ export default function App() {
 
           <div className="mx-auto max-w-7xl px-4 text-center text-xs text-slate-500 sm:text-sm">
 
-            <p>&copy; {new Date().getFullYear()} SLC Skate Directory</p>
+            <p>&copy; {new Date().getFullYear()} Skate Directory</p>
 
           </div>
 
