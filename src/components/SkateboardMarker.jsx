@@ -1,15 +1,15 @@
 import React from 'react';
 
 /**
- * High-contrast pins for the dark brown map:
- * bone-white deck (reads on warm land) + cyan wheels (complements brown).
+ * High-contrast pins for the light-blue map overlay:
+ * white deck + amber wheels on dark navy page background.
  */
 export const SKATE_MARKER_COLORS = {
-  background: '#f8fafc',
-  borderColor: '#0c0a09',
-  glyphColor: '#0c0a09',
-  wheel: '#22d3ee',
-  wheelRim: '#ecfeff',
+  background: '#ffffff',
+  borderColor: '#0f172a',
+  glyphColor: '#0f172a',
+  wheel: '#fbbf24',
+  wheelRim: '#fef3c7',
 };
 
 /**
@@ -99,7 +99,7 @@ const SkateboardMarker = ({ colors = SKATE_MARKER_COLORS, size = 28, selected = 
       viewBox="0 0 40 40"
       style={{
         filter:
-          'drop-shadow(0 0 3px rgba(0,0,0,0.95)) drop-shadow(0 2px 6px rgba(0,0,0,0.85))',
+          'drop-shadow(0 0 2px rgba(15, 23, 42, 0.95)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.9))',
         transform: selected ? 'scale(1.3)' : 'scale(1)',
         transformOrigin: 'center bottom',
         transition: 'transform 0.15s ease-out',

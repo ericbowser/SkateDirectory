@@ -15,9 +15,11 @@ import { NIGHT_MAP_STYLES } from '../config/mapLayout';
 import { downloadParksCsv } from '../utils/exportParksCsv';
 
 const FOCUS_ZOOM = 15;
-const OVERVIEW_MIN_ZOOM = 7;
-const OVERVIEW_MAX_ZOOM = 10;
+const OVERVIEW_MIN_ZOOM = 8;
+const OVERVIEW_MAX_ZOOM = 11;
 const FIT_PADDING = { top: 40, right: 40, bottom: 64, left: 40 };
+const PAGE_BG = '#0b1120';
+const MAP_TILE_OPACITY = 0.72;
 
 function parkLatLng(park) {
   return {
@@ -114,6 +116,113 @@ function MapCameraController({ parks, focusedPark, resetKey }) {
   }, [map, parks, focusedPark, resetKey]);
 
   return null;
+}
+
+function MapTileFade({ opacity }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return undefined;
+
+    map.setOptions({ backgroundColor: PAGE_BG });
+
+    const fadeTiles = () => {
+      const container = map.getDiv();
+      if (!container) return;
+
+      container.style.backgroundColor = PAGE_BG;
+
+      const tileNodes = container.querySelectorAll(
+        'img[src*="google"], img[src*="gstatic"], canvas'
+      );
+
+      tileNodes.forEach((node) => {
+        let el = node.parentElement;
+        let depth = 0;
+        while (el && el !== container && depth < 4) {
+          el.style.opacity = String(opacity);
+          el = el.parentElement;
+          depth += 1;
+        }
+      });
+    };
+
+    fadeTiles();
+    const listeners = ['tilesloaded', 'idle', 'zoom_changed', 'bounds_changed'].map(
+      (event) => map.addListener(event, fadeTiles)
+    );
+
+    return () => listeners.forEach((listener) => listener.remove());
+  }, [map, opacity]);
+
+  return null;
+}
+
+function ParkMarkers({ parks, onMarkerClick }) {
+  return parksWithCoords(parks).map((park) => {
+    const position = parkLatLng(park);
+
+    if (googleMapsMapId) {
+      return (
+        <AdvancedMarker
+          key={park.id}
+          position={position}
+          onClick={() => onMarkerClick(park)}
+          title={park.parkName}
+        >
+          <SkateboardMarker colors={SKATE_MARKER_COLORS} selected={false} />
+        </AdvancedMarker>
+      );
+    }
+
+    return (
+      <Marker
+        key={park.id}
+        position={position}
+        onClick={() => onMarkerClick(park)}
+        title={park.parkName}
+        icon={buildSkateboardIconUrl(SKATE_MARKER_COLORS, { selected: false })}
+      />
+    );
+  });
+}
+
+function SkateparkMapLayers({
+  skateparks,
+  mapResetKey,
+  initialCenter,
+  initialZoom,
+  onMarkerClick,
+}) {
+  const mapProps = googleMapsMapId
+    ? { mapId: googleMapsMapId }
+    : { styles: NIGHT_MAP_STYLES, colorScheme: 'LIGHT' };
+
+  return (
+    <div className="relative h-full overflow-hidden rounded-xl ring-1 ring-slate-700/60">
+      <Map
+        {...mapProps}
+        defaultCenter={initialCenter}
+        defaultZoom={initialZoom}
+        backgroundColor={PAGE_BG}
+        gestureHandling="greedy"
+        disableDefaultUI={false}
+        zoomControl
+        mapTypeControl={false}
+        streetViewControl={false}
+        fullscreenControl
+        className="h-full w-full"
+      >
+        <MapCameraController
+          parks={skateparks}
+          focusedPark={null}
+          resetKey={mapResetKey}
+        />
+        <MapTileFade opacity={MAP_TILE_OPACITY} />
+        <ParkMarkers parks={skateparks} onMarkerClick={onMarkerClick} />
+      </Map>
+    </div>
+  );
 }
 
 const MapLoadingState = () => (
@@ -230,12 +339,12 @@ const SkateParksMap = ({ onParkSelect }) => {
             </span>
           </div>
 
-          <div className="h-full overflow-hidden rounded-xl opacity-50 ring-1 ring-slate-700/60">
+          <div className="h-full">
             {loading && <MapLoadingState />}
 
             {!loading && error && (
               <div
-                className="flex h-full items-center justify-center bg-slate-950 px-4 text-sm text-rose-400"
+                className="flex h-full items-center justify-center rounded-xl bg-slate-950 px-4 text-sm text-rose-400 ring-1 ring-slate-700/60"
                 role="alert"
               >
                 {error}
@@ -244,7 +353,7 @@ const SkateParksMap = ({ onParkSelect }) => {
 
             {!loading && !error && !googleMapsApiKey && (
               <div
-                className="flex h-full items-center justify-center bg-slate-950 px-4 text-sm text-rose-400"
+                className="flex h-full items-center justify-center rounded-xl bg-slate-950 px-4 text-sm text-rose-400 ring-1 ring-slate-700/60"
                 role="alert"
               >
                 Set GOOGLE_MAPS_JS_KEY in .env and restart Vite.
@@ -253,53 +362,13 @@ const SkateParksMap = ({ onParkSelect }) => {
 
             {!loading && !error && googleMapsApiKey && (
               <APIProvider apiKey={googleMapsApiKey}>
-                <Map
-                  {...(googleMapsMapId
-                    ? { mapId: googleMapsMapId }
-                    : { styles: NIGHT_MAP_STYLES, colorScheme: 'DARK' })}
-                  defaultCenter={initialCenter}
-                  defaultZoom={initialZoom}
-                  gestureHandling="greedy"
-                  disableDefaultUI={false}
-                  zoomControl
-                  mapTypeControl={false}
-                  streetViewControl={false}
-                  fullscreenControl
-                  className="h-full w-full"
-                >
-                  <MapCameraController
-                    parks={skateparks}
-                    focusedPark={null}
-                    resetKey={mapResetKey}
-                  />
-
-                  {parksWithCoords(skateparks).map((park) => {
-                    const position = parkLatLng(park);
-
-                    if (googleMapsMapId) {
-                      return (
-                        <AdvancedMarker
-                          key={park.id}
-                          position={position}
-                          onClick={() => handleMarkerClick(park)}
-                          title={park.parkName}
-                        >
-                          <SkateboardMarker colors={SKATE_MARKER_COLORS} selected={false} />
-                        </AdvancedMarker>
-                      );
-                    }
-
-                    return (
-                      <Marker
-                        key={park.id}
-                        position={position}
-                        onClick={() => handleMarkerClick(park)}
-                        title={park.parkName}
-                        icon={buildSkateboardIconUrl(SKATE_MARKER_COLORS, { selected: false })}
-                      />
-                    );
-                  })}
-                </Map>
+                <SkateparkMapLayers
+                  skateparks={skateparks}
+                  mapResetKey={mapResetKey}
+                  initialCenter={initialCenter}
+                  initialZoom={initialZoom}
+                  onMarkerClick={handleMarkerClick}
+                />
               </APIProvider>
             )}
           </div>

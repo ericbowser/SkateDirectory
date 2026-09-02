@@ -1,34 +1,40 @@
 import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
+import { buildSkateboardWireGeometries } from '../utils/skateboardShape';
 
-/** Cool teal / indigo / mint wireframe palette */
-const LINE_COLORS = ['#5eead4', '#67e8f9', '#818cf8', '#a5b4fc', '#6ee7b7', '#7dd3fc'];
+/** Amber + slate palette — visible on navy bg, complements light-blue map */
+const LINE_COLORS = [
+  '#fbbf24', // amber-400
+  '#94a3b8', // slate-400
+  '#fcd34d', // amber-300
+  '#cbd5e1', // slate-300
+  '#f59e0b', // amber-500
+  '#64748b', // slate-500
+  '#fde68a', // amber-200
+  '#7dd3fc', // sky-300
+  '#d97706', // amber-600
+  '#e2e8f0', // slate-200
+];
 
 const MIN_SPEED = 0.48;
 const MAX_SPEED = 1.05;
 
-const SHAPE_DEFS = [
-  { kind: 'triangle', size: 0.11, sides: 3 },
-  { kind: 'square', size: 0.1, sides: 4 },
-  { kind: 'pentagon', size: 0.095, sides: 5 },
-  { kind: 'hexagon', size: 0.09, sides: 6 },
-  { kind: 'triangle', size: 0.075, sides: 3 },
-  { kind: 'square', size: 0.085, sides: 4 },
-  { kind: 'hexagon', size: 0.08, sides: 6 },
-  { kind: 'pentagon', size: 0.07, sides: 5 },
-  { kind: 'triangle', size: 0.065, sides: 3 },
-  { kind: 'square', size: 0.06, sides: 4 },
+const SKATEBOARD_DEFS = [
+  { scale: 0.005 },
+  { scale: 0.0047 },
+  { scale: 0.0044 },
+  { scale: 0.0041 },
+  { scale: 0.0039 },
+  { scale: 0.0037 },
+  { scale: 0.0035 },
+  { scale: 0.0033 },
+  { scale: 0.0031 },
+  { scale: 0.0029 },
 ];
 
-function buildLoopGeometry(sides, radius) {
-  const points = [];
-  const start = sides === 4 ? Math.PI / 4 : -Math.PI / 2;
-  for (let i = 0; i < sides; i += 1) {
-    const angle = start + (i / sides) * Math.PI * 2;
-    points.push(new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0));
-  }
-  return new THREE.BufferGeometry().setFromPoints(points);
+function randomWheelColor() {
+  const hue = 180 + Math.floor(Math.random() * 80);
+  return `hsl(${hue}, 72%, 62%)`;
 }
 
 function randomVelocity() {
@@ -87,27 +93,36 @@ function resolveCircleCollision(a, b) {
 }
 
 function createBodies() {
-  return SHAPE_DEFS.map((def, index) => {
+  return SKATEBOARD_DEFS.map((def, index) => {
     const vel = randomVelocity();
+    const { collisionRadius } = buildSkateboardWireGeometries(def.scale);
     return {
-      ...def,
+      scale: def.scale,
       color: LINE_COLORS[index % LINE_COLORS.length],
+      wheelColor: randomWheelColor(),
       x: (Math.random() - 0.5) * 1.4,
       y: (Math.random() - 0.5) * 1.0,
       vx: vel.vx,
       vy: vel.vy,
-      radius: def.size * 1.15,
+      radius: collisionRadius * 1.05,
       rotation: Math.random() * Math.PI * 2,
       spin: (Math.random() - 0.5) * 0.08,
     };
   });
 }
 
-function WireShape({ geometry, color, meshRef }) {
+function SkateboardWire({ geometries, color, wheelColor, groupRef }) {
   return (
-    <lineLoop ref={meshRef} geometry={geometry}>
-      <lineBasicMaterial color={color} transparent opacity={0.62} />
-    </lineLoop>
+    <group ref={groupRef}>
+      <mesh geometry={geometries.deckTube}>
+        <meshBasicMaterial color={color} transparent opacity={0.32} />
+      </mesh>
+      {geometries.wheels.map((wheelGeometry, index) => (
+        <lineLoop key={`wheel-${index}`} geometry={wheelGeometry}>
+          <lineBasicMaterial color={wheelColor} transparent opacity={0.62} />
+        </lineLoop>
+      ))}
+    </group>
   );
 }
 
@@ -129,10 +144,12 @@ function BouncingWireframeScene() {
     bounds.current = { x: aspect - margin - 0.02, y: 1 - margin - 0.02 };
   }, [camera, size]);
 
-  const geometries = useMemo(
-    () => SHAPE_DEFS.map((def) => buildLoopGeometry(def.sides, def.size)),
-    []
-  );
+  const geometryByScale = useMemo(() => {
+    const scales = [...new Set(SKATEBOARD_DEFS.map((def) => def.scale))];
+    return Object.fromEntries(
+      scales.map((scale) => [scale, buildSkateboardWireGeometries(scale)])
+    );
+  }, []);
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.032);
@@ -170,21 +187,22 @@ function BouncingWireframeScene() {
     }
 
     list.forEach((body, index) => {
-      const mesh = meshRefs.current[index];
-      if (!mesh) return;
-      mesh.position.set(body.x, body.y, 0);
-      mesh.rotation.z = body.rotation;
+      const group = meshRefs.current[index];
+      if (!group) return;
+      group.position.set(body.x, body.y, 0);
+      group.rotation.z = body.rotation;
     });
   });
 
   return (
     <>
       {bodies.current.map((body, index) => (
-        <WireShape
-          key={`${body.kind}-${index}`}
+        <SkateboardWire
+          key={`skate-${index}`}
           color={body.color}
-          geometry={geometries[index]}
-          meshRef={(node) => {
+          wheelColor={body.wheelColor}
+          geometries={geometryByScale[body.scale]}
+          groupRef={(node) => {
             meshRefs.current[index] = node;
           }}
         />
@@ -194,7 +212,7 @@ function BouncingWireframeScene() {
 }
 
 /**
- * Full-page ambient animation — wireframe shapes bounce and carry on.
+ * Full-page ambient animation — wireframe skateboards bounce around.
  */
 export default function AnimatedPageBackground() {
   return (

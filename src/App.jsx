@@ -18,7 +18,10 @@ export default function App() {
 
   return (
 
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden overflow-x-hidden bg-black">
+    <div
+      className="relative flex h-dvh w-full flex-col overflow-hidden overflow-x-hidden"
+      style={{ backgroundColor: 'var(--page-bg)' }}
+    >
 
       <AnimatedPageBackground />
 
@@ -26,7 +29,10 @@ export default function App() {
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
 
-        <header className="z-50 shrink-0 border-b border-slate-800/80 bg-black/80 backdrop-blur-md">
+        <header
+          className="z-50 shrink-0 border-b border-slate-800/80 backdrop-blur-md"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--page-bg) 82%, transparent)' }}
+        >
 
           <div className="mx-auto max-w-7xl px-3 sm:px-4">
 
@@ -124,7 +130,7 @@ export default function App() {
 
               isMapHome
 
-                ? 'min-h-0 min-w-0 px-3 pb-4 pt-2 sm:px-4 sm:pb-5'
+                ? 'min-h-0 min-w-0 px-3 pb-8 pt-2 sm:px-4 sm:pb-10'
 
                 : 'overflow-y-auto px-3 pb-6 pt-2 sm:px-4 sm:pb-8'
 
@@ -140,7 +146,10 @@ export default function App() {
 
 
 
-        <footer className="shrink-0 border-t border-slate-700/80 bg-black/80 py-2.5 backdrop-blur-md">
+        <footer
+          className="shrink-0 border-t border-slate-700/80 py-2.5 backdrop-blur-md"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--page-bg) 82%, transparent)' }}
+        >
 
           <div className="mx-auto max-w-7xl px-4 text-center text-xs text-slate-500 sm:text-sm">
 
