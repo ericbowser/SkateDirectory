@@ -11,15 +11,18 @@ import { apiUrl, apiRoutes, googleMapsApiKey, googleMapsMapId } from '../config/
 import SkateboardMarker, { buildSkateboardIconUrl, SKATE_MARKER_COLORS } from './SkateboardMarker';
 import QuickSearch from './QuickSearch';
 import SelectedParkPanel from './SelectedParkPanel';
-import { NIGHT_MAP_STYLES } from '../config/mapLayout';
 import { downloadParksCsv } from '../utils/exportParksCsv';
+import {
+  PAGE_BG,
+  MAP_TILE_OPACITY,
+  MapTileFade,
+  getSharedMapStyleProps,
+} from './mapTheme';
 
 const FOCUS_ZOOM = 15;
 const OVERVIEW_MIN_ZOOM = 8;
 const OVERVIEW_MAX_ZOOM = 11;
-const FIT_PADDING = { top: 40, right: 40, bottom: 64, left: 40 };
-const PAGE_BG = '#0b1120';
-const MAP_TILE_OPACITY = 0.72;
+const FIT_PADDING = { top: 48, right: 48, bottom: 72, left: 48 };
 
 function parkLatLng(park) {
   return {
@@ -118,46 +121,6 @@ function MapCameraController({ parks, focusedPark, resetKey }) {
   return null;
 }
 
-function MapTileFade({ opacity }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map) return undefined;
-
-    map.setOptions({ backgroundColor: PAGE_BG });
-
-    const fadeTiles = () => {
-      const container = map.getDiv();
-      if (!container) return;
-
-      container.style.backgroundColor = PAGE_BG;
-
-      const tileNodes = container.querySelectorAll(
-        'img[src*="google"], img[src*="gstatic"], canvas'
-      );
-
-      tileNodes.forEach((node) => {
-        let el = node.parentElement;
-        let depth = 0;
-        while (el && el !== container && depth < 4) {
-          el.style.opacity = String(opacity);
-          el = el.parentElement;
-          depth += 1;
-        }
-      });
-    };
-
-    fadeTiles();
-    const listeners = ['tilesloaded', 'idle', 'zoom_changed', 'bounds_changed'].map(
-      (event) => map.addListener(event, fadeTiles)
-    );
-
-    return () => listeners.forEach((listener) => listener.remove());
-  }, [map, opacity]);
-
-  return null;
-}
-
 function ParkMarkers({ parks, onMarkerClick }) {
   return parksWithCoords(parks).map((park) => {
     const position = parkLatLng(park);
@@ -194,9 +157,7 @@ function SkateparkMapLayers({
   initialZoom,
   onMarkerClick,
 }) {
-  const mapProps = googleMapsMapId
-    ? { mapId: googleMapsMapId }
-    : { styles: NIGHT_MAP_STYLES, colorScheme: 'LIGHT' };
+  const mapProps = getSharedMapStyleProps();
 
   return (
     <div className="relative h-full overflow-hidden rounded-xl ring-1 ring-slate-700/60">

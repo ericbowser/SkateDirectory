@@ -84,6 +84,20 @@
     "isOpen24Hours": false
   },
   {
+    "folder": "NorthOgden_SkatePark",
+    "parkName": "North Ogden Skatepark",
+    "parkStatus": "Active",
+    "locationLatitude": 41.31200000,
+    "locationLongitude": -111.96000000,
+    "parkAddress": "475 E 2550 N, North Ogden, UT 84414",
+    "hasLighting": false,
+    "parkDescription": "Neighborhood skatepark in North Ogden near 475 E / 2550 N. Compact concrete layout for street and beginner-to-intermediate sessions.",
+    "opens": "08:00",
+    "closes": "Dusk",
+    "parkWebsite": "https://www.northogdencity.com/",
+    "isOpen24Hours": false
+  },
+  {
     "folder": "RosePark_SkatePark",
     "parkName": "Rose Park Skatepark",
     "parkStatus": "Active",

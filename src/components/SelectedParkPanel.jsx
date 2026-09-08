@@ -7,6 +7,7 @@ import { apiUrl, apiRoutes } from '../config/env';
 import { getDirectionsUrl } from '../utils/directions';
 
 import ParkPhotoGallery from './ParkPhotoGallery';
+import ParkMiniMap from './ParkMiniMap';
 
 
 
@@ -189,7 +190,12 @@ const SelectedParkPanel = ({ park, onClose, showCloseButton = true, closeLabel =
 
       {error && <p className="mb-4 text-sm text-amber-400/90">{error}</p>}
 
-
+      <div className="mb-8">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
+          Location
+        </h3>
+        <ParkMiniMap park={data} />
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
 
