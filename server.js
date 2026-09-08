@@ -8,7 +8,7 @@ const {
   InsertFeature,
   InsertPark,
 } = require('./sqldb/sqlclient');
-const { ASSETS_ROOT } = require('./skateAssets');
+const { ASSETS_ROOT } = require('./lib/parkPhotos');
 const { validateSuggestion, saveSuggestion } = require('./lib/suggestPark');
 
 const app = express();

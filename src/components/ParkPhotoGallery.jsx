@@ -98,7 +98,7 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
     : 'overflow-hidden rounded-2xl border border-slate-700 bg-slate-950';
   const imageClass = compact
     ? 'aspect-[16/9] max-h-36 w-full object-cover'
-    : 'aspect-[4/3] w-full object-cover sm:aspect-[16/10]';
+    : 'aspect-[16/9] w-full object-cover sm:aspect-[16/10]';
 
   if (!hasMultiple) {
     const src = photoSrc(current);

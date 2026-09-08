@@ -1,5 +1,5 @@
 const { Pool } = require('pg');
-const { getPhotosForParkName, mergePhotos } = require('../skateAssets');
+const { getPhotosForParkName, mergePhotos } = require('../lib/parkPhotos');
 
 // Shared Postgres instance (same box as the other sites) — this app gets its own
 // schema so `search_path` scopes every unqualified table name to `skate`.
