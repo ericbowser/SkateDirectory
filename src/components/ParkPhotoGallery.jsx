@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { assetUrl } from '../config/env';
 
 function photoSrc(photo) {
-  return photo.url || photo.photoUrl || photo.filePath;
+  const raw = photo.url || photo.photoUrl || photo.filePath;
+  return assetUrl(raw);
 }
 
 function photoAlt(photo, parkName) {

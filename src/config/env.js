@@ -12,6 +12,21 @@ export function apiUrl(route) {
   return base ? `${base}${path}` : path;
 }
 
+/**
+ * Resolve park photo / static asset paths.
+ * API returns root-relative `/skate_assets/...` — when VITE_API_BASE_URL points at a
+ * different origin (e.g. http://localhost:3001), images must use that same origin.
+ */
+export function assetUrl(pathOrUrl) {
+  if (!pathOrUrl) return '';
+  if (/^https?:\/\//i.test(pathOrUrl) || pathOrUrl.startsWith('data:')) {
+    return pathOrUrl;
+  }
+  const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+  const base = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+  return base ? `${base}${path}` : path;
+}
+
 export const apiRoutes = {
   getParks: import.meta.env.VITE_REL_GET_PARK || '/api/getparks',
   getPark: import.meta.env.VITE_REL_GET_PARK_DETAIL || '/api/getpark/',

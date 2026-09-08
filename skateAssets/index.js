@@ -30,7 +30,12 @@ function listImagesInFolder(folder) {
 }
 
 function photoUrl(folder, filename) {
-  return `/skate_assets/${folder}/${encodeURIComponent(filename)}`;
+  // Keep path segments readable; only encode chars that break URLs (spaces, brackets, etc.)
+  const safeName = filename
+    .split('/')
+    .map((part) => encodeURIComponent(part))
+    .join('/');
+  return `/skate_assets/${folder}/${safeName}`;
 }
 
 function mapAssetPhoto(folder, filename, index) {
