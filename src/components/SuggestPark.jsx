@@ -76,8 +76,9 @@ export default function SuggestPark() {
             required
             value={form.parkName}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-slate-100 outline-none focus:border-amber-500/60"
+            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-base text-slate-100 outline-none focus:border-amber-500/60"
             placeholder="Fairmont Skatepark"
+            autoComplete="organization"
           />
         </div>
 
@@ -91,8 +92,9 @@ export default function SuggestPark() {
             required
             value={form.address}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-slate-100 outline-none focus:border-amber-500/60"
+            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-base text-slate-100 outline-none focus:border-amber-500/60"
             placeholder="1040 E Sugarmont Dr, Salt Lake City, UT"
+            autoComplete="street-address"
           />
         </div>
 
@@ -106,8 +108,10 @@ export default function SuggestPark() {
             type="url"
             value={form.website}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-slate-100 outline-none focus:border-amber-500/60"
+            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-base text-slate-100 outline-none focus:border-amber-500/60"
             placeholder="https://"
+            autoComplete="url"
+            inputMode="url"
           />
         </div>
 
@@ -122,7 +126,7 @@ export default function SuggestPark() {
             rows={4}
             value={form.description}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-slate-100 outline-none focus:border-amber-500/60"
+            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-base text-slate-100 outline-none focus:border-amber-500/60"
             placeholder="Bowl, street section, lighting, vibe…"
           />
         </div>
@@ -137,15 +141,17 @@ export default function SuggestPark() {
             type="email"
             value={form.contactEmail}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-slate-100 outline-none focus:border-amber-500/60"
+            className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-base text-slate-100 outline-none focus:border-amber-500/60"
             placeholder="you@example.com"
+            autoComplete="email"
+            inputMode="email"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-amber-500 disabled:opacity-50"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-amber-600 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-amber-500 disabled:opacity-50 sm:w-auto"
         >
           {loading ? 'Sending…' : 'Submit suggestion'}
         </button>

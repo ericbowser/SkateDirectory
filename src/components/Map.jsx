@@ -171,7 +171,7 @@ function SkateparkMapLayers({
         zoomControl
         mapTypeControl={false}
         streetViewControl={false}
-        fullscreenControl
+        fullscreenControl={false}
         className="h-full w-full"
       >
         <MapCameraController
@@ -250,7 +250,7 @@ const SkateParksMap = ({ onParkSelect }) => {
   const showingDetails = Boolean(selectedPark);
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 overflow-x-hidden">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2 overflow-x-hidden sm:gap-3">
       {/* Search — dropdown must sit above the map */}
       <section
         aria-label="Search skateparks"
@@ -261,15 +261,15 @@ const SkateParksMap = ({ onParkSelect }) => {
           onResultClick={focusPark}
           onDownloadCsv={handleDownloadCsv}
         />
-        {!loading && skateparks.length > 0 && (
+        {!loading && skateparks.length > 0 && !showingDetails && (
           <div className="flex justify-end px-0.5">
             <button
               type="button"
               onClick={handleDownloadCsv}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-900/60 px-3 py-1.5 text-xs font-medium text-amber-400/90 transition-colors hover:border-amber-500/30 hover:bg-slate-800 hover:text-amber-300"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-900/60 px-3 py-1.5 text-xs font-medium text-amber-400/90 transition-colors hover:border-amber-500/30 hover:bg-slate-800 hover:text-amber-300"
             >
               <svg
-                className="h-3.5 w-3.5"
+                className="h-3.5 w-3.5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -282,7 +282,10 @@ const SkateParksMap = ({ onParkSelect }) => {
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                 />
               </svg>
-              Download {skateparks.length} parks (CSV)
+              <span className="sm:hidden">CSV</span>
+              <span className="hidden sm:inline">
+                Download {skateparks.length} parks (CSV)
+              </span>
             </button>
           </div>
         )}
@@ -345,7 +348,7 @@ const SkateParksMap = ({ onParkSelect }) => {
           <button
             type="button"
             onClick={handleBackToMap}
-            className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-slate-600 bg-slate-800/90 px-4 py-2 text-sm font-medium text-amber-400 transition-colors hover:border-amber-500/40 hover:bg-slate-800 hover:text-amber-300"
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 self-start rounded-xl border border-slate-600 bg-slate-800/90 px-4 py-2.5 text-sm font-medium text-amber-400 transition-colors hover:border-amber-500/40 hover:bg-slate-800 hover:text-amber-300 active:bg-slate-700"
           >
             <svg
               className="h-4 w-4"

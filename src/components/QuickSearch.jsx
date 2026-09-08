@@ -89,6 +89,7 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchRef = useRef(null);
   const resultsRef = useRef(null);
+  const suppressResultsRef = useRef(false);
 
   const results = useMemo(() => {
     const q = searchTerm.trim();
@@ -101,6 +102,10 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
 
   useEffect(() => {
     setSelectedIndex(-1);
+    if (suppressResultsRef.current) {
+      setShowResults(false);
+      return;
+    }
     if (searchTerm.trim().length >= 1) {
       setShowResults(true);
     } else {
@@ -124,10 +129,15 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
     if (scorePark(park, searchTerm) < 60) return;
 
     const t = window.setTimeout(() => {
+      suppressResultsRef.current = true;
       setSearchTerm(name);
       setShowResults(false);
       setSelectedIndex(-1);
+      searchRef.current?.blur();
       onResultClick?.(park);
+      window.setTimeout(() => {
+        suppressResultsRef.current = false;
+      }, 0);
     }, 550);
     return () => window.clearTimeout(t);
   }, [results, searchTerm, onResultClick]);
@@ -163,10 +173,15 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
   };
 
   const handleResultClick = (park) => {
+    suppressResultsRef.current = true;
     setSearchTerm(park.parkName || park.ParkName || '');
     setShowResults(false);
     setSelectedIndex(-1);
+    searchRef.current?.blur();
     onResultClick?.(park);
+    window.setTimeout(() => {
+      suppressResultsRef.current = false;
+    }, 0);
   };
 
   const handleBlur = () => {
@@ -175,6 +190,11 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
         setShowResults(false);
       }
     }, 150);
+  };
+
+  const handleChange = (e) => {
+    suppressResultsRef.current = false;
+    setSearchTerm(e.target.value);
   };
 
   const getName = (park) => park.parkName || park.ParkName || 'Unknown park';
@@ -216,16 +236,18 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
           ref={searchRef}
           type="text"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={() => queryActive && setShowResults(true)}
           onBlur={handleBlur}
           placeholder="Search skateparks…"
           autoComplete="off"
+          enterKeyHint="search"
+          inputMode="search"
           className={
             compact
-              ? 'w-full rounded-lg border border-slate-700/80 bg-slate-950/70 py-2.5 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 shadow-lg shadow-black/20 outline-none backdrop-blur-sm transition-colors focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15'
-              : 'w-full rounded-2xl border border-slate-700/80 bg-slate-950/70 py-4 pl-14 pr-5 text-lg text-slate-100 placeholder:text-slate-500 shadow-lg shadow-black/25 outline-none backdrop-blur-sm transition-colors focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15'
+              ? 'w-full rounded-lg border border-slate-700/80 bg-slate-950/70 py-2.5 pl-9 pr-3 text-base text-slate-100 placeholder:text-slate-500 shadow-lg shadow-black/20 outline-none backdrop-blur-sm transition-colors focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15'
+              : 'w-full rounded-xl border border-slate-700/80 bg-slate-950/70 py-3 pl-12 pr-4 text-base text-slate-100 placeholder:text-slate-500 shadow-lg shadow-black/25 outline-none backdrop-blur-sm transition-colors focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15 sm:rounded-2xl sm:py-4 sm:pl-14 sm:pr-5 sm:text-lg'
           }
         />
       </div>
@@ -242,7 +264,7 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
       {showResults && queryActive && parks.length > 0 && results.length > 0 && (
         <div
           ref={resultsRef}
-          className="absolute z-[60] mt-2 max-h-96 w-full overflow-y-auto rounded-2xl border border-slate-700 bg-slate-800 shadow-2xl shadow-black/50"
+          className="absolute z-[60] mt-2 max-h-[min(24rem,55dvh)] w-full overflow-y-auto overscroll-y-contain rounded-2xl border border-slate-700 bg-slate-800 shadow-2xl shadow-black/50"
           role="listbox"
         >
           {results.map((park, index) => (
@@ -251,8 +273,8 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
               type="button"
               role="option"
               aria-selected={selectedIndex === index}
-              className={`flex w-full items-start justify-between gap-3 border-b border-slate-700/80 px-4 py-3 text-left last:border-b-0 transition-colors ${
-                selectedIndex === index ? 'bg-slate-700/80' : 'hover:bg-slate-700/50'
+              className={`flex w-full min-h-[3.25rem] items-start justify-between gap-3 border-b border-slate-700/80 px-3 py-3 text-left last:border-b-0 transition-colors sm:px-4 ${
+                selectedIndex === index ? 'bg-slate-700/80' : 'hover:bg-slate-700/50 active:bg-slate-700/70'
               }`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleResultClick(park)}
@@ -267,7 +289,8 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
                 )}
               </div>
               <span className="shrink-0 rounded-lg bg-amber-500/15 px-2 py-1 text-xs font-medium text-amber-400">
-                Show on map
+                <span className="sm:hidden">Open</span>
+                <span className="hidden sm:inline">Show on map</span>
               </span>
             </button>
           ))}
@@ -281,9 +304,10 @@ const QuickSearch = ({ parks = [], onResultClick, onDownloadCsv, compact = false
                   onDownloadCsv();
                   setShowResults(false);
                 }}
-                className="block w-full text-center text-sm font-medium text-amber-400 hover:text-amber-300"
+                className="block min-h-11 w-full py-2 text-center text-sm font-medium text-amber-400 hover:text-amber-300"
               >
-                Download full park list (CSV)
+                <span className="sm:hidden">Download CSV</span>
+                <span className="hidden sm:inline">Download full park list (CSV)</span>
               </button>
             </div>
           )}

@@ -12,6 +12,36 @@ body,
   overflow-x: hidden;
   max-width: 100%;
   background-color: var(--page-bg);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS safe areas (notch / home indicator) */
+.safe-px {
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+}
+
+.safe-pb {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.safe-pt {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Horizontal chip / thumbnail rows on narrow screens */
+.scroll-x-touch {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.25rem;
+}
+
+.scroll-x-touch::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes page-ambient-drift {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { assetUrl } from '../config/env';
 
 function photoSrc(photo) {
@@ -30,6 +30,7 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
   );
 
   const [index, setIndex] = useState(0);
+  const touchStartX = useRef(null);
   const count = sorted.length;
   const current = sorted[index];
   const hasMultiple = count > 1;
@@ -58,13 +59,28 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [hasMultiple, goPrev, goNext]);
 
+  const onTouchStart = (event) => {
+    touchStartX.current = event.changedTouches[0]?.clientX ?? null;
+  };
+
+  const onTouchEnd = (event) => {
+    if (touchStartX.current == null || !hasMultiple) return;
+    const endX = event.changedTouches[0]?.clientX;
+    if (endX == null) return;
+    const delta = endX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < 48) return;
+    if (delta > 0) goPrev();
+    else goNext();
+  };
+
   if (!count) {
     return (
       <div
         className={
           compact
             ? 'rounded-xl border border-dashed border-slate-600/80 bg-slate-950/40 px-4 py-6 text-center'
-            : 'flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-600 bg-slate-950/50 px-6 text-center'
+            : 'flex min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-600 bg-slate-950/50 px-4 text-center sm:min-h-[220px] sm:px-6'
         }
       >
         <p className="font-medium text-slate-300">No photos yet</p>
@@ -82,7 +98,7 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
     : 'overflow-hidden rounded-2xl border border-slate-700 bg-slate-950';
   const imageClass = compact
     ? 'aspect-[16/9] max-h-36 w-full object-cover'
-    : 'aspect-[16/10] w-full object-cover';
+    : 'aspect-[4/3] w-full object-cover sm:aspect-[16/10]';
 
   if (!hasMultiple) {
     const src = photoSrc(current);
@@ -109,7 +125,11 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
 
   return (
     <div className={compact ? 'space-y-2' : 'space-y-3'}>
-      <div className={`group relative ${frameClass}`}>
+      <div
+        className={`group relative touch-pan-y ${frameClass}`}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         <a
           href={src}
           target="_blank"
@@ -123,13 +143,14 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
             alt={photoAlt(current, parkName)}
             className={`${imageClass} transition-opacity hover:opacity-95`}
             loading="lazy"
+            draggable={false}
           />
         </a>
 
         <button
           type="button"
           onClick={goPrev}
-          className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-600/80 bg-black/70 text-slate-100 opacity-90 backdrop-blur-sm transition hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+          className="absolute left-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-600/80 bg-black/70 text-slate-100 opacity-100 backdrop-blur-sm transition hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-amber-500/40 sm:left-2 sm:h-9 sm:w-9 sm:opacity-90"
           aria-label="Previous photo"
         >
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden="true">
@@ -144,7 +165,7 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
         <button
           type="button"
           onClick={goNext}
-          className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-600/80 bg-black/70 text-slate-100 opacity-90 backdrop-blur-sm transition hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+          className="absolute right-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-600/80 bg-black/70 text-slate-100 opacity-100 backdrop-blur-sm transition hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-amber-500/40 sm:right-2 sm:h-9 sm:w-9 sm:opacity-90"
           aria-label="Next photo"
         >
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden="true">
@@ -166,7 +187,7 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
       )}
 
       <div
-        className="flex items-center justify-center gap-2"
+        className="scroll-x-touch flex items-center gap-2 px-0.5"
         role="tablist"
         aria-label="Photo thumbnails"
       >
@@ -181,11 +202,11 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
               aria-selected={selected}
               aria-label={`Photo ${i + 1}`}
               onClick={() => setIndex(i)}
-              className={`overflow-hidden rounded-md border transition ${
+              className={`shrink-0 overflow-hidden rounded-md border transition ${
                 selected
                   ? 'border-amber-500/70 ring-2 ring-amber-500/30'
                   : 'border-slate-700 opacity-70 hover:opacity-100'
-              } ${compact ? 'h-10 w-14' : 'h-12 w-16 sm:h-14 sm:w-20'}`}
+              } ${compact ? 'h-11 w-14' : 'h-12 w-16 sm:h-14 sm:w-20'}`}
             >
               <img
                 src={thumbSrc}

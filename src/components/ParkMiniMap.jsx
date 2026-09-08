@@ -64,7 +64,7 @@ export default function ParkMiniMap({ park }) {
             defaultCenter={position}
             defaultZoom={MINI_ZOOM}
             backgroundColor={PAGE_BG}
-            gestureHandling="cooperative"
+            gestureHandling="greedy"
             disableDefaultUI
             zoomControl
             mapTypeControl={false}
