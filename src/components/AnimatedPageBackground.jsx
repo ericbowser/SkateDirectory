@@ -2,39 +2,46 @@ import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { buildSkateboardWireGeometries } from '../utils/skateboardShape';
 
-/** Amber + slate palette — visible on navy bg, complements light-blue map */
+/** Warm amber/ivory only — reads on navy without competing with UI chrome */
 const LINE_COLORS = [
   '#fbbf24', // amber-400
-  '#94a3b8', // slate-400
   '#fcd34d', // amber-300
-  '#cbd5e1', // slate-300
   '#f59e0b', // amber-500
-  '#64748b', // slate-500
   '#fde68a', // amber-200
-  '#7dd3fc', // sky-300
+  '#e2e8f0', // slate-200 (bright edge)
+  '#fbbf24',
   '#d97706', // amber-600
-  '#e2e8f0', // slate-200
+  '#fef3c7', // amber-100
+  '#f59e0b',
+  '#cbd5e1', // slate-300
+];
+
+const WHEEL_COLORS = [
+  '#f59e0b',
+  '#fbbf24',
+  '#ea580c',
+  '#fcd34d',
+  '#fb923c',
 ];
 
 const MIN_SPEED = 0.48;
 const MAX_SPEED = 1.05;
 
 const SKATEBOARD_DEFS = [
+  { scale: 0.0054 },
   { scale: 0.005 },
   { scale: 0.0047 },
   { scale: 0.0044 },
   { scale: 0.0041 },
-  { scale: 0.0039 },
-  { scale: 0.0037 },
-  { scale: 0.0035 },
+  { scale: 0.0038 },
+  { scale: 0.0036 },
   { scale: 0.0033 },
   { scale: 0.0031 },
   { scale: 0.0029 },
 ];
 
 function randomWheelColor() {
-  const hue = 180 + Math.floor(Math.random() * 80);
-  return `hsl(${hue}, 72%, 62%)`;
+  return WHEEL_COLORS[Math.floor(Math.random() * WHEEL_COLORS.length)];
 }
 
 function randomVelocity() {
@@ -114,12 +121,32 @@ function createBodies() {
 function SkateboardWire({ geometries, color, wheelColor, groupRef }) {
   return (
     <group ref={groupRef}>
+      {/* Soft underglow tube */}
       <mesh geometry={geometries.deckTube}>
-        <meshBasicMaterial color={color} transparent opacity={0.32} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={0.18}
+          depthWrite={false}
+        />
       </mesh>
+      {/* Sharp deck outline — readable silhouette */}
+      <line geometry={geometries.deckLine}>
+        <lineBasicMaterial
+          color={color}
+          transparent
+          opacity={0.78}
+          depthWrite={false}
+        />
+      </line>
       {geometries.wheels.map((wheelGeometry, index) => (
         <lineLoop key={`wheel-${index}`} geometry={wheelGeometry}>
-          <lineBasicMaterial color={wheelColor} transparent opacity={0.62} />
+          <lineBasicMaterial
+            color={wheelColor}
+            transparent
+            opacity={0.9}
+            depthWrite={false}
+          />
         </lineLoop>
       ))}
     </group>

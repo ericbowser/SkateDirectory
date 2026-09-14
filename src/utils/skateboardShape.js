@@ -45,13 +45,17 @@ export function buildSkateboardWireGeometries(scale) {
   const deckTube = new THREE.TubeGeometry(
     deckCurve,
     Math.max(48, deckPoints.length * 2),
-    scale * 1.1,
+    scale * 0.85,
     8,
     false
   );
 
+  const deckLine = new THREE.BufferGeometry().setFromPoints(
+    deckCurve.getPoints(Math.max(64, deckPoints.length * 3))
+  );
+
   const wheelGeometries = wheels.map(({ x, y, r }) => {
-    const segments = 18;
+    const segments = 20;
     const points = [];
     for (let i = 0; i < segments; i += 1) {
       const angle = (i / segments) * Math.PI * 2;
@@ -62,6 +66,7 @@ export function buildSkateboardWireGeometries(scale) {
 
   return {
     deckTube,
+    deckLine,
     wheels: wheelGeometries,
     collisionRadius: 17.5 * scale,
   };
