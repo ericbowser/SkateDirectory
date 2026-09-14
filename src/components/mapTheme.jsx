@@ -1,23 +1,23 @@
 import { useEffect } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 import { googleMapsMapId } from '../config/env';
-import { NIGHT_MAP_STYLES } from '../config/mapLayout';
+import { PASTEL_MAP_STYLES } from '../config/mapLayout';
 
 /** Shared page / map chrome background */
-export const PAGE_BG = '#0b1120';
+export const PAGE_BG = '#152033';
 
-/** Tile opacity — keeps the light-blue theme readable over the navy page */
-export const MAP_TILE_OPACITY = 0.78;
+/** Full-opacity tiles — no fade over the page background */
+export const MAP_TILE_OPACITY = 1;
 
 /** Props shared by the overview map and park mini-map */
 export function getSharedMapStyleProps() {
   return googleMapsMapId
     ? { mapId: googleMapsMapId }
-    : { styles: NIGHT_MAP_STYLES, colorScheme: 'LIGHT' };
+    : { styles: PASTEL_MAP_STYLES, colorScheme: 'LIGHT' };
 }
 
 /**
- * Softens Google tile layers to match the app's navy + light-blue look.
+ * Softens Google tile layers to match the app's navy + pastel look.
  * Markers stay full-opacity (not inside the faded tile wrappers).
  */
 export function MapTileFade({ opacity = MAP_TILE_OPACITY }) {

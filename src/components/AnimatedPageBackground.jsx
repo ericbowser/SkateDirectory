@@ -2,26 +2,27 @@ import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { buildSkateboardWireGeometries } from '../utils/skateboardShape';
 
-/** Warm amber/ivory only — reads on navy without competing with UI chrome */
+/** Bright pastels + white — high contrast on navy so boards stay visible */
 const LINE_COLORS = [
-  '#fbbf24', // amber-400
-  '#fcd34d', // amber-300
-  '#f59e0b', // amber-500
-  '#fde68a', // amber-200
-  '#e2e8f0', // slate-200 (bright edge)
-  '#fbbf24',
-  '#d97706', // amber-600
-  '#fef3c7', // amber-100
-  '#f59e0b',
-  '#cbd5e1', // slate-300
+  '#ffffff',
+  '#fce7f3',
+  '#e9d5ff',
+  '#dbeafe',
+  '#d1fae5',
+  '#ffedd5',
+  '#fef9c3',
+  '#fbcfe8',
+  '#c7d2fe',
+  '#a7f3d0',
 ];
 
 const WHEEL_COLORS = [
-  '#f59e0b',
-  '#fbbf24',
-  '#ea580c',
-  '#fcd34d',
-  '#fb923c',
+  '#ffffff',
+  '#f9a8d4',
+  '#c4b5fd',
+  '#93c5fd',
+  '#6ee7b7',
+  '#fdba74',
 ];
 
 const MIN_SPEED = 0.48;
@@ -121,32 +122,15 @@ function createBodies() {
 function SkateboardWire({ geometries, color, wheelColor, groupRef }) {
   return (
     <group ref={groupRef}>
-      {/* Soft underglow tube */}
       <mesh geometry={geometries.deckTube}>
-        <meshBasicMaterial
-          color={color}
-          transparent
-          opacity={0.18}
-          depthWrite={false}
-        />
+        <meshBasicMaterial color={color} transparent opacity={0.45} depthWrite={false} />
       </mesh>
-      {/* Sharp deck outline — readable silhouette */}
       <line geometry={geometries.deckLine}>
-        <lineBasicMaterial
-          color={color}
-          transparent
-          opacity={0.78}
-          depthWrite={false}
-        />
+        <lineBasicMaterial color={color} transparent={false} depthWrite={false} />
       </line>
       {geometries.wheels.map((wheelGeometry, index) => (
         <lineLoop key={`wheel-${index}`} geometry={wheelGeometry}>
-          <lineBasicMaterial
-            color={wheelColor}
-            transparent
-            opacity={0.9}
-            depthWrite={false}
-          />
+          <lineBasicMaterial color={wheelColor} transparent={false} depthWrite={false} />
         </lineLoop>
       ))}
     </group>

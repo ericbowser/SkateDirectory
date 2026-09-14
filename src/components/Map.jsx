@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   APIProvider,
   Map,
@@ -76,47 +76,41 @@ function fitMapToParks(map, parks, padding = FIT_PADDING) {
   });
 }
 
-function MapCameraController({ parks, focusedPark, resetKey }) {
+function MapCameraController({ parks, focusedPark }) {
   const map = useMap();
+  const hasFittedRef = useRef(false);
+  const parkCount = parksWithCoords(parks).length;
 
   useEffect(() => {
-    if (!map || !window.google?.maps) return;
+    if (!map || !window.google?.maps) return undefined;
 
     const valid = parksWithCoords(parks);
-    if (!valid.length) return;
+    if (!valid.length) return undefined;
 
     if (focusedPark) {
       const { lat, lng } = parkLatLng(focusedPark);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
       map.panTo({ lat, lng });
       map.setZoom(FOCUS_ZOOM);
-      return;
+      return undefined;
     }
 
-    const runOverviewFit = () => fitMapToParks(map, valid);
+    // Fit overview when parks first arrive (or count changes), not when returning from details.
+    if (hasFittedRef.current === parkCount) return undefined;
+
+    const runOverviewFit = () => {
+      fitMapToParks(map, valid);
+      hasFittedRef.current = parkCount;
+    };
 
     const frame = requestAnimationFrame(() => {
       requestAnimationFrame(runOverviewFit);
     });
 
-    const mapEl = map.getDiv?.();
-    let resizeObserver;
-    let resizeTimer;
-    if (mapEl && typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(() => {
-        if (focusedPark) return;
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(runOverviewFit, 120);
-      });
-      resizeObserver.observe(mapEl);
-    }
-
     return () => {
       cancelAnimationFrame(frame);
-      clearTimeout(resizeTimer);
-      resizeObserver?.disconnect();
     };
-  }, [map, parks, focusedPark, resetKey]);
+  }, [map, parks, focusedPark, parkCount]);
 
   return null;
 }
@@ -133,7 +127,7 @@ function ParkMarkers({ parks, onMarkerClick }) {
           onClick={() => onMarkerClick(park)}
           title={park.parkName}
         >
-          <SkateboardMarker colors={SKATE_MARKER_COLORS} selected={false} />
+          <SkateboardMarker colors={SKATE_MARKER_COLORS} size={38} selected={false} />
         </AdvancedMarker>
       );
     }
@@ -144,7 +138,7 @@ function ParkMarkers({ parks, onMarkerClick }) {
         position={position}
         onClick={() => onMarkerClick(park)}
         title={park.parkName}
-        icon={buildSkateboardIconUrl(SKATE_MARKER_COLORS, { selected: false })}
+        icon={buildSkateboardIconUrl(SKATE_MARKER_COLORS, { size: 40, selected: false })}
       />
     );
   });
@@ -152,7 +146,6 @@ function ParkMarkers({ parks, onMarkerClick }) {
 
 function SkateparkMapLayers({
   skateparks,
-  mapResetKey,
   initialCenter,
   initialZoom,
   onMarkerClick,
@@ -174,11 +167,7 @@ function SkateparkMapLayers({
         fullscreenControl={false}
         className="h-full w-full"
       >
-        <MapCameraController
-          parks={skateparks}
-          focusedPark={null}
-          resetKey={mapResetKey}
-        />
+        <MapCameraController parks={skateparks} focusedPark={null} />
         <MapTileFade opacity={MAP_TILE_OPACITY} />
         <ParkMarkers parks={skateparks} onMarkerClick={onMarkerClick} />
       </Map>
@@ -198,7 +187,6 @@ const SkateParksMap = ({ onParkSelect }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedPark, setSelectedPark] = useState(null);
-  const [mapResetKey, setMapResetKey] = useState(0);
   const [initialCenter] = useState({ lat: 40.65, lng: -112.35 });
   const [initialZoom] = useState(8);
 
@@ -238,7 +226,6 @@ const SkateParksMap = ({ onParkSelect }) => {
 
   const handleBackToMap = useCallback(() => {
     setSelectedPark(null);
-    setMapResetKey((k) => k + 1);
   }, []);
 
   const handleDownloadCsv = useCallback(() => {
@@ -250,7 +237,7 @@ const SkateParksMap = ({ onParkSelect }) => {
   const showingDetails = Boolean(selectedPark);
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2 overflow-x-hidden sm:gap-3">
+    <div className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2 overflow-x-hidden sm:gap-3">
       {/* Search — dropdown must sit above the map */}
       <section
         aria-label="Search skateparks"
@@ -291,12 +278,17 @@ const SkateParksMap = ({ onParkSelect }) => {
         )}
       </section>
 
-      {/* Map — fills page; hidden (not unmounted) while viewing park details */}
-      <section
-        aria-label="Map of skateparks"
-        aria-hidden={showingDetails}
-        className={`relative z-0 min-h-0 min-w-0 flex-1 ${showingDetails ? 'hidden' : ''}`}
-      >
+      {/* Shared stage: keep map mounted + sized while details are open (avoids Google Maps retile) */}
+      <div className="relative min-h-0 min-w-0 flex-1">
+        <section
+          aria-label="Map of skateparks"
+          aria-hidden={showingDetails}
+          className={
+            showingDetails
+              ? 'pointer-events-none invisible absolute inset-0 z-0'
+              : 'relative z-0 h-full min-h-0 min-w-0'
+          }
+        >
           <div className="pointer-events-none absolute left-3 top-3 z-10">
             <span className="rounded-md bg-slate-950/85 px-2 py-0.5 text-[11px] text-slate-400 backdrop-blur-sm">
               {loading ? 'Loading…' : `${parkCount} parks`}
@@ -328,7 +320,6 @@ const SkateParksMap = ({ onParkSelect }) => {
               <APIProvider apiKey={googleMapsApiKey}>
                 <SkateparkMapLayers
                   skateparks={skateparks}
-                  mapResetKey={mapResetKey}
                   initialCenter={initialCenter}
                   initialZoom={initialZoom}
                   onMarkerClick={handleMarkerClick}
@@ -336,41 +327,41 @@ const SkateParksMap = ({ onParkSelect }) => {
               </APIProvider>
             )}
           </div>
-      </section>
-
-      {/* Details — replaces visible map when a park is selected */}
-      {showingDetails && (
-        <section
-          id="park-details"
-          aria-label="Park details"
-          className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden"
-        >
-          <button
-            type="button"
-            onClick={handleBackToMap}
-            className="inline-flex min-h-11 shrink-0 items-center gap-2 self-start rounded-xl border border-slate-600 bg-slate-800/90 px-4 py-2.5 text-sm font-medium text-amber-400 transition-colors hover:border-amber-500/40 hover:bg-slate-800 hover:text-amber-300 active:bg-slate-700"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to map
-          </button>
-
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-1">
-            <SelectedParkPanel
-              park={selectedPark}
-              onClose={handleBackToMap}
-              showCloseButton={false}
-            />
-          </div>
         </section>
-      )}
+
+        {showingDetails && (
+          <section
+            id="park-details"
+            aria-label="Park details"
+            className="relative z-10 flex h-full min-h-0 min-w-0 flex-col gap-2 overflow-hidden"
+          >
+            <button
+              type="button"
+              onClick={handleBackToMap}
+              className="inline-flex min-h-11 shrink-0 items-center gap-2 self-start rounded-xl border border-slate-600 bg-slate-800/90 px-4 py-2.5 text-sm font-medium text-amber-400 transition-colors hover:border-amber-500/40 hover:bg-slate-800 hover:text-amber-300 active:bg-slate-700"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to map
+            </button>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-1">
+              <SelectedParkPanel
+                park={selectedPark}
+                onClose={handleBackToMap}
+                showCloseButton={false}
+              />
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 };
