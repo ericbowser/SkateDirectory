@@ -1,5 +1,20 @@
 [
   {
+    "folder": "Clinton_SkatePark",
+    "parkName": "Clinton Skatepark",
+    "aliases": ["Clinton Powerline Skatepark", "Powerline Park Skatepark"],
+    "parkStatus": "Active",
+    "locationLatitude": 41.138151,
+    "locationLongitude": -112.05763,
+    "parkAddress": "1660 W 1740 N, Clinton, UT 84015",
+    "hasLighting": false,
+    "parkDescription": "Compact neighborhood skatepark at Powerline Park in Clinton — best for smaller sessions and beginner-to-intermediate street/transition.",
+    "opens": "08:00",
+    "closes": "Dusk",
+    "parkWebsite": "https://clintoncity.net/",
+    "isOpen24Hours": false
+  },
+  {
     "folder": "Copperview_Skate_Park",
     "parkName": "Copperview Skatepark",
     "parkStatus": "Active",
@@ -95,6 +110,21 @@
     "opens": "08:00",
     "closes": "Dusk",
     "parkWebsite": "https://www.northogdencity.com/",
+    "isOpen24Hours": false
+  },
+  {
+    "folder": "Ogden_40thStreet_SkatePark",
+    "parkName": "South Ogden Skatepark (40th Street)",
+    "aliases": ["40th Street Skatepark", "Ogden 40th Street Skatepark", "South Ogden Skatepark"],
+    "parkStatus": "Active",
+    "locationLatitude": 41.19100000,
+    "locationLongitude": -111.96200000,
+    "parkAddress": "580 40th St, South Ogden, UT 84403",
+    "hasLighting": true,
+    "parkDescription": "Well-designed concrete park at 40th Street Park in South Ogden with terrain for beginner through advanced sessions.",
+    "opens": "08:00",
+    "closes": "21:00",
+    "parkWebsite": "https://southogdencity.gov/departments/parks.php",
     "isOpen24Hours": false
   },
   {
