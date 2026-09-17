@@ -1,20 +1,34 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 const {
   GetParks,
   GetParkById,
   GetFeatures,
   InsertFeature,
   InsertPark,
+  DeletePark,
 } = require('./sqldb/sqlclient');
-const { ASSETS_ROOT } = require('./lib/parkPhotos');
+const { ASSETS_ROOT, saveUploadedParkPhoto, refreshIndex } = require('./lib/parkPhotos');
 const { validateSuggestion, saveSuggestion } = require('./lib/suggestPark');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/skate_assets', express.static(ASSETS_ROOT, { maxAge: '7d' }));
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 12 * 1024 * 1024, files: 12 },
+  fileFilter(_req, file, cb) {
+    if (/^image\/(jpeg|png|webp|gif)$/i.test(file.mimetype)) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Only JPEG, PNG, WebP, or GIF images are allowed'));
+  },
+});
 
 function requireAdmin(req, res, next) {
   const adminKey = process.env.ADMIN_API_KEY;
@@ -62,6 +76,16 @@ app.post('/api/addpark', requireAdmin, async (req, res) => {
   }
 });
 
+app.delete('/api/parks/:id', requireAdmin, async (req, res) => {
+  try {
+    const park = await DeletePark(req.params.id);
+    res.json({ ok: true, park });
+  } catch (err) {
+    console.error('[deletepark]', err);
+    res.status(err.status || 500).json({ message: err.status ? err.message : 'Failed to delete park' });
+  }
+});
+
 app.get('/api/getfeatures', async (req, res) => {
   try {
     const features = await GetFeatures();
@@ -92,6 +116,51 @@ app.post('/api/suggest-park', async (req, res) => {
     console.error('[suggest-park]', err);
     res.status(err.status || 500).json({ message: err.status ? err.message : 'Failed to save suggestion' });
   }
+});
+
+/**
+ * Upload one or more photos for a park — saved under skate_assets/{folder}/.
+ * Field name: "photos" (multipart). Same admin gate as addpark when ADMIN_API_KEY is set.
+ */
+app.post('/api/parks/:id/photos', requireAdmin, (req, res) => {
+  upload.array('photos', 12)(req, res, async (err) => {
+    if (err) {
+      const message = err.message || 'Upload failed';
+      console.error('[upload-photos]', message);
+      return res.status(400).json({ message });
+    }
+
+    try {
+      const park = await GetParkById(req.params.id);
+      if (!park) return res.status(404).json({ message: 'Park not found' });
+
+      const files = req.files || [];
+      if (!files.length) {
+        return res.status(400).json({ message: 'Choose at least one photo to upload' });
+      }
+
+      const saved = [];
+      for (const file of files) {
+        const result = saveUploadedParkPhoto(park.parkName, file);
+        saved.push(result.photo);
+      }
+
+      refreshIndex();
+      const refreshed = await GetParkById(req.params.id);
+      console.log('[upload-photos]', park.parkName, saved.length, 'file(s)');
+      res.json({
+        ok: true,
+        uploaded: saved,
+        photos: refreshed?.photos || [],
+        park: refreshed,
+      });
+    } catch (uploadErr) {
+      console.error('[upload-photos]', uploadErr);
+      res
+        .status(uploadErr.status || 500)
+        .json({ message: uploadErr.status ? uploadErr.message : 'Failed to save photos' });
+    }
+  });
 });
 
 const port = Number(process.env.API_PORT) || 3001;

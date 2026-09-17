@@ -34,6 +34,7 @@ export const apiRoutes = {
   getFeatures: import.meta.env.VITE_REL_GET_FEATURE || '/api/getfeatures',
   addFeature: import.meta.env.VITE_REL_ADD_FEATURE || '/api/addfeature',
   suggestPark: import.meta.env.VITE_REL_SUGGEST_PARK || '/api/suggest-park',
+  uploadParkPhotos: import.meta.env.VITE_REL_UPLOAD_PARK_PHOTOS || '/api/parks/',
 };
 
 /** When true, show the legacy direct-add park form (local/admin only). */

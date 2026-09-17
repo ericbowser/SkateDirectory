@@ -33,7 +33,11 @@ function parkLatLng(park) {
 
 function parksWithCoords(parks) {
   return (parks ?? []).filter((park) => {
-    const { lat, lng } = parkLatLng(park);
+    const rawLat = park.locationLatitude ?? park.LocationLatitude;
+    const rawLng = park.locationLongitude ?? park.LocationLongitude;
+    if (rawLat == null || rawLng == null || rawLat === '' || rawLng === '') return false;
+    const lat = Number(rawLat);
+    const lng = Number(rawLng);
     return Number.isFinite(lat) && Number.isFinite(lng);
   });
 }

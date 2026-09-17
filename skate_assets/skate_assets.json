@@ -1,5 +1,35 @@
 [
   {
+    "folder": "Bountiful_SkatePark",
+    "parkName": "Bountiful Skatepark",
+    "aliases": ["Washington Park Skatepark", "Bountiful Washington Park Skatepark"],
+    "parkStatus": "Active",
+    "locationLatitude": 40.8817337,
+    "locationLongitude": -111.8904005,
+    "parkAddress": "450 W 740 S, Bountiful, UT 84010",
+    "hasLighting": false,
+    "parkDescription": "Newer concrete skatepark at Washington Park in Bountiful with bowl sections and a streetscape area of stairs, rails, benches, and step-ups.",
+    "opens": "08:00",
+    "closes": "Dusk",
+    "parkWebsite": "https://www.bountifulutah.gov/",
+    "isOpen24Hours": false
+  },
+  {
+    "folder": "Clearfield_SkatePark",
+    "parkName": "Clearfield Skatepark",
+    "aliases": ["Fisher Park Skatepark", "Clearfield Fisher Park Skatepark"],
+    "parkStatus": "Active",
+    "locationLatitude": 41.1004305,
+    "locationLongitude": -112.0085722,
+    "parkAddress": "934 S 1000 E, Clearfield, UT 84015",
+    "hasLighting": true,
+    "parkDescription": "Large lit skatepark at Fisher Park with multiple bowls, a flow section, and a street course with rails and ledges. Open dawn to 11pm.",
+    "opens": "Dawn",
+    "closes": "23:00",
+    "parkWebsite": "https://clearfieldcity.org/",
+    "isOpen24Hours": false
+  },
+  {
     "folder": "Clinton_SkatePark",
     "parkName": "Clinton Skatepark",
     "aliases": ["Clinton Powerline Skatepark", "Powerline Park Skatepark"],

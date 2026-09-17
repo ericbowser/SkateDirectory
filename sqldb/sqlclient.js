@@ -170,6 +170,33 @@ async function InsertPark(body) {
   return { ...park, ParkName: park.parkName };
 }
 
+async function DeletePark(id) {
+  const parkId = Number(id);
+  if (!Number.isFinite(parkId)) {
+    const err = new Error('Valid park id is required');
+    err.status = 400;
+    throw err;
+  }
+
+  await pool.query(`DELETE FROM park_feature_mapping WHERE park_id = $1`, [parkId]);
+  try {
+    await pool.query(`DELETE FROM park_photo WHERE park_id = $1`, [parkId]);
+  } catch (err) {
+    if (err.code !== '42P01' && err.code !== '42703') throw err;
+  }
+
+  const { rows } = await pool.query(
+    `DELETE FROM park WHERE id = $1 RETURNING ${PARK_COLUMNS}`,
+    [parkId]
+  );
+  if (!rows.length) {
+    const err = new Error('Park not found');
+    err.status = 404;
+    throw err;
+  }
+  return mapPark(rows[0]);
+}
+
 async function InsertFeature(body) {
   const featureName = body.FeatureName ?? body.featureName;
   if (!featureName) {
@@ -208,4 +235,4 @@ async function InsertFeature(body) {
   return mapFeature(rows[0]);
 }
 
-module.exports = { GetParks, GetParkById, GetFeatures, InsertFeature, InsertPark, pool };
+module.exports = { GetParks, GetParkById, GetFeatures, InsertFeature, InsertPark, DeletePark, pool };

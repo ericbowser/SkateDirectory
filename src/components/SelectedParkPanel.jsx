@@ -3,6 +3,7 @@ import { FetchData } from '../services/http';
 import { apiUrl, apiRoutes } from '../config/env';
 import { getDirectionsUrl } from '../utils/directions';
 import ParkPhotoGallery from './ParkPhotoGallery';
+import ParkPhotoUpload from './ParkPhotoUpload';
 import ParkMiniMap from './ParkMiniMap';
 
 /**
@@ -195,10 +196,22 @@ const SelectedParkPanel = ({ park, onClose, showCloseButton = true, closeLabel =
           </div>
         </div>
 
-        <div className="order-1 lg:order-2">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
-            Photos
-          </h3>
+        <div className="order-1 space-y-4 lg:order-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Photos
+            </h3>
+            <ParkPhotoUpload
+              parkId={data.id || park.id}
+              onUploaded={(result) => {
+                if (result?.park) {
+                  setDetails(result.park);
+                } else if (result?.photos) {
+                  setDetails((prev) => ({ ...(prev || park), photos: result.photos }));
+                }
+              }}
+            />
+          </div>
           <ParkPhotoGallery photos={photos} parkName={data.parkName || data.ParkName} />
         </div>
       </div>

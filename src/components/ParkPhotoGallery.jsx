@@ -86,7 +86,7 @@ export default function ParkPhotoGallery({ photos = [], parkName = 'Skatepark', 
         <p className="font-medium text-slate-300">No photos yet</p>
         {!compact && (
           <p className="mt-2 max-w-xs text-sm text-slate-500">
-            Add images under <code className="text-slate-400">skate_assets/</code> for this park.
+            Use <span className="text-slate-400">Add photos</span> above to upload shots from this park.
           </p>
         )}
       </div>
