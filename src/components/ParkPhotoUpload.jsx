@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import axios from 'axios';
 import { apiUrl, apiRoutes } from '../config/env';
+import { adminHeaders } from '../services/http';
 
 /**
  * Upload control for park detail — saves into skate_assets/{parkFolder}/ via API.
@@ -24,7 +25,7 @@ export default function ParkPhotoUpload({ parkId, onUploaded }) {
 
     try {
       const response = await axios.post(apiUrl(`${apiRoutes.uploadParkPhotos}${parkId}/photos`), body, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': 'multipart/form-data', ...adminHeaders() },
         validateStatus: (status) => status >= 200 && status < 300,
       });
       const count = response.data?.uploaded?.length || files.length;

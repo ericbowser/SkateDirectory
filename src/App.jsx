@@ -1,7 +1,8 @@
-﻿import React from 'react';
+﻿import React, { Suspense, lazy } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { parkAdminEnabled } from './config/env';
-import AnimatedPageBackground from './components/AnimatedPageBackground';
+
+const AnimatedPageBackground = lazy(() => import('./components/AnimatedPageBackground'));
 
 export default function App() {
   const { pathname } = useLocation();
@@ -12,7 +13,9 @@ export default function App() {
       className="relative flex h-dvh w-full flex-col overflow-hidden overflow-x-hidden"
       style={{ backgroundColor: 'var(--page-bg)' }}
     >
-      <AnimatedPageBackground />
+      <Suspense fallback={null}>
+        <AnimatedPageBackground />
+      </Suspense>
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <header

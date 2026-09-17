@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { PostData } from '../services/http';
+import { PostData, getAdminApiKey, setAdminApiKey } from '../services/http';
 import { apiUrl, apiRoutes, parkAdminEnabled } from '../config/env';
 
 const SkateparkForm = () => {
@@ -18,6 +18,7 @@ const SkateparkForm = () => {
     HasVariableHours: true, // Simplified from isVariableClosing
   });
 
+  const [adminKey, setAdminKey] = useState(() => getAdminApiKey());
   const [message, setMessage] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
 
@@ -53,6 +54,7 @@ const SkateparkForm = () => {
         LastUpdatedDate: new Date().toISOString()
       };
 
+      setAdminApiKey(adminKey);
       const response = await PostData(apiUrl(apiRoutes.addPark), skateparkData);
 
       setMessage({
@@ -109,6 +111,23 @@ const SkateparkForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="p-4 border rounded-lg">
+          <h3 className="text-lg font-semibold mb-4">Server admin key</h3>
+          <label htmlFor="AdminApiKey" className="block text-sm font-medium text-gray-700">
+            x-admin-key (stored in this browser tab only)
+          </label>
+          <input
+            type="password"
+            id="AdminApiKey"
+            name="AdminApiKey"
+            value={adminKey}
+            onChange={(e) => setAdminKey(e.target.value)}
+            autoComplete="off"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Same value as ADMIN_API_KEY on the server"
+          />
+        </div>
+
         {/* Basic Information */}
         <div className="p-4 border rounded-lg">
           <h3 className="text-lg font-semibold mb-4">Basic Information</h3>

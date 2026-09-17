@@ -14,9 +14,10 @@ const { ASSETS_ROOT, saveUploadedParkPhoto, refreshIndex } = require('./lib/park
 const { validateSuggestion, saveSuggestion } = require('./lib/suggestPark');
 
 const app = express();
+app.disable('x-powered-by');
 app.use(cors());
-app.use(express.json());
-app.use('/skate_assets', express.static(ASSETS_ROOT, { maxAge: '7d' }));
+app.use(express.json({ limit: '1mb' }));
+app.use('/skate_assets', express.static(ASSETS_ROOT, { maxAge: '7d', etag: true, lastModified: true }));
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -32,13 +33,18 @@ const upload = multer({
 
 function requireAdmin(req, res, next) {
   const adminKey = process.env.ADMIN_API_KEY;
-  if (!adminKey) {
+  if (adminKey && req.headers['x-admin-key'] === adminKey) {
     return next();
   }
-  if (req.headers['x-admin-key'] === adminKey) {
+  // Local/dev convenience only — never set ALLOW_OPEN_ADMIN on production.
+  if (process.env.ALLOW_OPEN_ADMIN === 'true') {
     return next();
   }
-  return res.status(403).json({ message: 'Admin access required' });
+  return res.status(403).json({
+    message: adminKey
+      ? 'Admin access required'
+      : 'Admin access required — set ADMIN_API_KEY on the server',
+  });
 }
 
 app.get('/api/health', (req, res) => {
@@ -48,6 +54,8 @@ app.get('/api/health', (req, res) => {
 app.get('/api/getparks', async (req, res) => {
   try {
     const parks = await GetParks();
+    // Short CDN/browser cache — park list changes rarely
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     res.json(parks);
   } catch (err) {
     console.error('[getparks]', err);
@@ -59,6 +67,7 @@ app.get('/api/getpark/:id', async (req, res) => {
   try {
     const park = await GetParkById(req.params.id);
     if (!park) return res.status(404).json({ message: 'Park not found' });
+    res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
     res.json(park);
   } catch (err) {
     console.error('[getpark]', err);

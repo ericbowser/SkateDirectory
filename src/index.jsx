@@ -1,38 +1,64 @@
-﻿import React from 'react';
+﻿import React, { Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import SkateParkForm from "./components/SkateParkForm";
-import SuggestPark from "./components/SuggestPark";
-import Map from "./components/Map";
 import './styles/input.css';
-import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 
-ModuleRegistry.registerModules([ AllCommunityModule ]);
+const Map = lazy(() => import('./components/Map'));
+const SuggestPark = lazy(() => import('./components/SuggestPark'));
+const SkateParkForm = lazy(() => import('./components/SkateParkForm'));
 
-let router = createBrowserRouter([
+function RouteFallback() {
+  return (
+    <div className="flex flex-1 items-center justify-center py-16 text-sm text-slate-500">
+      Loading…
+    </div>
+  );
+}
+
+function LazyPage({ children }) {
+  return <Suspense fallback={<RouteFallback />}>{children}</Suspense>;
+}
+
+const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     Component: App,
     children: [
       {
         index: true,
-        Component: Map
+        element: (
+          <LazyPage>
+            <Map />
+          </LazyPage>
+        ),
       },
       {
-        path: "suggest-park",
-        Component: SuggestPark
+        path: 'suggest-park',
+        element: (
+          <LazyPage>
+            <SuggestPark />
+          </LazyPage>
+        ),
       },
       {
-        path: "skatepark-form",
-        Component: SkateParkForm
+        path: 'skatepark-form',
+        element: (
+          <LazyPage>
+            <SkateParkForm />
+          </LazyPage>
+        ),
       },
       {
-        path: "map",
-        Component: Map
-      }
-    ]
-  }
+        path: 'map',
+        element: (
+          <LazyPage>
+            <Map />
+          </LazyPage>
+        ),
+      },
+    ],
+  },
 ]);
 
 const container = document.getElementById('root');

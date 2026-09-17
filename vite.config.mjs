@@ -22,6 +22,23 @@ export default defineConfig(({ mode }) => {
     envPrefix: ['VITE_', 'GOOGLE_MAPS_'],
     build: {
       outDir: 'build',
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+            if (id.includes('three') || id.includes('@react-three')) return 'three';
+            if (
+              id.includes('@vis.gl') ||
+              id.includes('@googlemaps') ||
+              id.includes('google-maps')
+            ) {
+              return 'maps';
+            }
+            if (id.includes('react-dom') || id.includes('/react/')) return 'react';
+            if (id.includes('axios')) return 'http';
+          },
+        },
+      },
     },
     server: {
       host: env.HOST || 'localhost',

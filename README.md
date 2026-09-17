@@ -87,17 +87,23 @@ Production builds use same-origin `/api/*` (nginx proxies to the backend). Local
 
 The static build alone is not enough — **`/api/*` must reach the Node API**. Without that, `/api/getparks` returns the HTML homepage and the map shows “Expected park list array, got string”.
 
-1. Run the API on the server (`SkateDirectoryApi`, port 3001, Postgres in `.env`).
+1. Run the API on the server (`node server.js` / systemd, port 3001, Postgres in `.env`).
 2. Proxy `/api/` in nginx — see [`deploy/nginx-skatedir.conf`](deploy/nginx-skatedir.conf).
 3. Verify: `curl https://skatedir.com/api/health` should return JSON, not HTML.
+4. **Lock write APIs:** set `ADMIN_API_KEY` on the server and do **not** set `ALLOW_OPEN_ADMIN`. Locally you can use `ALLOW_OPEN_ADMIN=true` (see `.env.example`).
 
 ```bash
 # Frontend — bake env at build time
 cp .env.production .env.production.local   # add GOOGLE_MAPS_JS_KEY
+npm run optimize:assets                    # recompress large park photos
 npm run build                              # output in build/
 
 # API — runtime .env on the server
-# SkateDirectoryApi/.env with Postgres credentials
+# ADMIN_API_KEY=<long random hex>
+# (no ALLOW_OPEN_ADMIN)
+
+# Remove accidental junk parks after DELETE is deployed:
+# ADMIN_API_KEY=... node scripts/delete-parks.mjs https://skatedir.com 1032 1034
 ```
 
 Or from the parent `Skate/` folder: `npm run docker:up` (web + api + postgres).

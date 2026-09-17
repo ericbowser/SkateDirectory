@@ -1,5 +1,31 @@
 import axios from 'axios';
 
+const ADMIN_KEY_STORAGE = 'skate_admin_key';
+
+/** Admin key for write APIs — sessionStorage (set on Admin form) or local Vite env. */
+export function getAdminApiKey() {
+  if (typeof window !== 'undefined') {
+    const fromSession = window.sessionStorage.getItem(ADMIN_KEY_STORAGE);
+    if (fromSession) return fromSession;
+  }
+  return import.meta.env.VITE_ADMIN_API_KEY || '';
+}
+
+export function setAdminApiKey(key) {
+  if (typeof window === 'undefined') return;
+  const trimmed = String(key || '').trim();
+  if (trimmed) {
+    window.sessionStorage.setItem(ADMIN_KEY_STORAGE, trimmed);
+  } else {
+    window.sessionStorage.removeItem(ADMIN_KEY_STORAGE);
+  }
+}
+
+function adminHeaders() {
+  const key = getAdminApiKey();
+  return key ? { 'x-admin-key': key } : {};
+}
+
 function parseResponseData(data, url) {
   if (typeof data === 'string') {
     const trimmed = data.trimStart();
@@ -17,7 +43,7 @@ function parseResponseData(data, url) {
 const PostData = async (url = '', body = {}) => {
   try {
     const response = await axios.post(url, body, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
       validateStatus: (status) => status >= 200 && status < 300,
     });
     return parseResponseData(response.data, url);
@@ -44,4 +70,4 @@ const FetchData = async (url = '') => {
   }
 };
 
-export { PostData, FetchData };
+export { PostData, FetchData, adminHeaders };
