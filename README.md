@@ -85,12 +85,33 @@ Production builds use same-origin `/api/*` (nginx proxies to the backend). Local
 
 ## Production deploy
 
-The static build alone is not enough — **`/api/*` must reach the Node API**. Without that, `/api/getparks` returns the HTML homepage and the map shows “Expected park list array, got string”.
+The static build alone is not enough — **`/api/*` must reach the Node API**. Without that, `/api/getparks` returns **502** (nginx) or the HTML homepage.
 
-1. Run the API on the server (`node server.js` / systemd, port 3001, Postgres in `.env`).
+1. Run the API on the server on port **3001** (systemd unit below).
 2. Proxy `/api/` in nginx — see [`deploy/nginx-skatedir.conf`](deploy/nginx-skatedir.conf).
-3. Verify: `curl https://skatedir.com/api/health` should return JSON, not HTML.
+3. Verify: `curl https://skatedir.com/api/health` should return JSON, not `error code: 502`.
 4. **Lock write APIs:** set `ADMIN_API_KEY` on the server and do **not** set `ALLOW_OPEN_ADMIN`. Locally you can use `ALLOW_OPEN_ADMIN=true` (see `.env.example`).
+
+### Keep the API alive (systemd)
+
+```bash
+# On the server
+sudo cp deploy/skatedir-api.service /etc/systemd/system/
+# Edit User=/WorkingDirectory= if needed
+sudo systemctl daemon-reload
+sudo systemctl enable --now skatedir-api
+curl -s http://127.0.0.1:3001/api/health
+journalctl -u skatedir-api -n 50 --no-pager
+```
+
+If you already deploy without systemd, a one-shot restart is:
+
+```bash
+cd /var/www/html/SkateDirectory
+# kill any stale process, then:
+NODE_ENV=production nohup node server.js >> /var/log/skatedir-api.log 2>&1 &
+curl -s http://127.0.0.1:3001/api/health
+```
 
 ```bash
 # Frontend — bake env at build time

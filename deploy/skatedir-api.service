@@ -1,0 +1,35 @@
+# Skate Directory API — install on the production host:
+#
+#   sudo cp deploy/skatedir-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now skatedir-api
+#   sudo systemctl status skatedir-api
+#
+# Requires: Node on PATH, app at /var/www/html/SkateDirectory, .env with DB + ADMIN_API_KEY.
+# Adjust User=/WorkingDirectory=/PATH if your layout differs.
+
+[Unit]
+Description=Skate Directory API (Express on :3001)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/html/SkateDirectory
+Environment=NODE_ENV=production
+EnvironmentFile=-/var/www/html/SkateDirectory/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+# Soft limit — photos upload in memory up to multer max
+MemoryMax=512M
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=skatedir-api
+
+[Install]
+WantedBy=multi-user.target
