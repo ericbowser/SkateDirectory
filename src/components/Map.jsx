@@ -24,6 +24,14 @@ const OVERVIEW_MIN_ZOOM = 8;
 const OVERVIEW_MAX_ZOOM = 11;
 const FIT_PADDING = { top: 48, right: 48, bottom: 72, left: 48 };
 
+/** Rough Utah / Wasatch Front corridor — keeps overview fit from including junk pins. */
+const OVERVIEW_REGION = {
+  minLat: 36.8,
+  maxLat: 42.2,
+  minLng: -114.3,
+  maxLng: -108.8,
+};
+
 function parkLatLng(park) {
   return {
     lat: Number(park.locationLatitude ?? park.LocationLatitude),
@@ -38,8 +46,25 @@ function parksWithCoords(parks) {
     if (rawLat == null || rawLng == null || rawLat === '' || rawLng === '') return false;
     const lat = Number(rawLat);
     const lng = Number(rawLng);
-    return Number.isFinite(lat) && Number.isFinite(lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+    // Ignore null-island / probe leftovers that would yank the camera overseas
+    if (lat === 0 && lng === 0) return false;
+    return true;
   });
+}
+
+function parksForOverview(parks) {
+  const valid = parksWithCoords(parks);
+  const inRegion = valid.filter((park) => {
+    const { lat, lng } = parkLatLng(park);
+    return (
+      lat >= OVERVIEW_REGION.minLat &&
+      lat <= OVERVIEW_REGION.maxLat &&
+      lng >= OVERVIEW_REGION.minLng &&
+      lng <= OVERVIEW_REGION.maxLng
+    );
+  });
+  return inRegion.length ? inRegion : valid;
 }
 
 function boundsForParks(parks) {
@@ -66,7 +91,7 @@ function clampOverviewZoom(map, parkCount) {
 }
 
 function fitMapToParks(map, parks, padding = FIT_PADDING) {
-  const valid = parksWithCoords(parks);
+  const valid = parksForOverview(parks);
   if (!valid.length) return;
 
   const mapEl = map.getDiv?.();
@@ -83,13 +108,13 @@ function fitMapToParks(map, parks, padding = FIT_PADDING) {
 function MapCameraController({ parks, focusedPark }) {
   const map = useMap();
   const hasFittedRef = useRef(false);
-  const parkCount = parksWithCoords(parks).length;
+  const parkCount = parksForOverview(parks).length;
 
   useEffect(() => {
     if (!map || !window.google?.maps) return undefined;
 
-    const valid = parksWithCoords(parks);
-    if (!valid.length) return undefined;
+    const overview = parksForOverview(parks);
+    if (!overview.length) return undefined;
 
     if (focusedPark) {
       const { lat, lng } = parkLatLng(focusedPark);
@@ -103,7 +128,7 @@ function MapCameraController({ parks, focusedPark }) {
     if (hasFittedRef.current === parkCount) return undefined;
 
     const runOverviewFit = () => {
-      fitMapToParks(map, valid);
+      fitMapToParks(map, overview);
       hasFittedRef.current = parkCount;
     };
 

@@ -1,4 +1,6 @@
-require('dotenv').config();
+const path = require('path');
+// Load .env beside server.js — process.cwd() differs under pm2/systemd/deploy scripts.
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -49,7 +51,10 @@ function requireAdmin(req, res, next) {
 }
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({
+    status: 'ok',
+    adminConfigured: Boolean(String(process.env.ADMIN_API_KEY || '').trim()),
+  });
 });
 
 app.get('/api/getparks', async (req, res) => {
