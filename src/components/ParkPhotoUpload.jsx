@@ -1,15 +1,18 @@
 import { useRef, useState } from 'react';
 import axios from 'axios';
 import { apiUrl, apiRoutes } from '../config/env';
-import { adminHeaders } from '../services/http';
+import { adminHeaders, getAdminApiKey, setAdminApiKey } from '../services/http';
 
 /**
  * Upload control for park detail — saves into skate_assets/{parkFolder}/ via API.
+ * Server may require x-admin-key when ADMIN_API_KEY is set (and ALLOW_OPEN_ADMIN is off).
  */
 export default function ParkPhotoUpload({ parkId, onUploaded }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [needsKey, setNeedsKey] = useState(false);
+  const [adminKey, setAdminKey] = useState(() => getAdminApiKey());
 
   const handleFiles = async (fileList) => {
     const files = [...(fileList || [])];
@@ -17,6 +20,7 @@ export default function ParkPhotoUpload({ parkId, onUploaded }) {
 
     setUploading(true);
     setMessage(null);
+    if (adminKey) setAdminApiKey(adminKey);
 
     const body = new FormData();
     for (const file of files) {
@@ -33,12 +37,22 @@ export default function ParkPhotoUpload({ parkId, onUploaded }) {
         type: 'success',
         text: count === 1 ? 'Photo added' : `${count} photos added`,
       });
+      setNeedsKey(false);
       onUploaded?.(response.data);
       if (inputRef.current) inputRef.current.value = '';
     } catch (err) {
+      const status = err.response?.status;
       const text =
         err.response?.data?.message || err.message || 'Could not upload photos';
-      setMessage({ type: 'error', text });
+      if (status === 403) {
+        setNeedsKey(true);
+        setMessage({
+          type: 'error',
+          text: 'Admin key required — enter the server ADMIN_API_KEY, then try again.',
+        });
+      } else {
+        setMessage({ type: 'error', text });
+      }
     } finally {
       setUploading(false);
     }
@@ -71,6 +85,22 @@ export default function ParkPhotoUpload({ parkId, onUploaded }) {
         </svg>
         {uploading ? 'Uploading…' : 'Add photos'}
       </button>
+      {needsKey && (
+        <label className="block space-y-1">
+          <span className="text-xs text-slate-400">Admin API key</span>
+          <input
+            type="password"
+            value={adminKey}
+            onChange={(e) => {
+              setAdminKey(e.target.value);
+              setAdminApiKey(e.target.value);
+            }}
+            autoComplete="off"
+            className="w-full rounded-lg border border-slate-600 bg-slate-900/80 px-3 py-2 text-sm text-slate-200"
+            placeholder="ADMIN_API_KEY from server .env"
+          />
+        </label>
+      )}
       {message && (
         <p
           className={`text-sm ${

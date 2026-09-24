@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FetchData } from '../services/http';
-import { apiUrl, apiRoutes, parkAdminEnabled } from '../config/env';
+import { apiUrl, apiRoutes } from '../config/env';
 import { getDirectionsUrl } from '../utils/directions';
 import ParkPhotoGallery from './ParkPhotoGallery';
 import ParkPhotoUpload from './ParkPhotoUpload';
@@ -201,18 +201,16 @@ const SelectedParkPanel = ({ park, onClose, showCloseButton = true, closeLabel =
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
               Photos
             </h3>
-            {parkAdminEnabled && (
-              <ParkPhotoUpload
-                parkId={data.id || park.id}
-                onUploaded={(result) => {
-                  if (result?.park) {
-                    setDetails(result.park);
-                  } else if (result?.photos) {
-                    setDetails((prev) => ({ ...(prev || park), photos: result.photos }));
-                  }
-                }}
-              />
-            )}
+            <ParkPhotoUpload
+              parkId={data.id || park.id}
+              onUploaded={(result) => {
+                if (result?.park) {
+                  setDetails(result.park);
+                } else if (result?.photos) {
+                  setDetails((prev) => ({ ...(prev || park), photos: result.photos }));
+                }
+              }}
+            />
           </div>
           <ParkPhotoGallery photos={photos} parkName={data.parkName || data.ParkName} />
         </div>
