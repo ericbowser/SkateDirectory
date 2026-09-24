@@ -29,7 +29,7 @@ const SelectedParkPanel = ({ park, onClose, showCloseButton = true, closeLabel =
     setPhotoError(null);
     try {
       const response = await axios.delete(
-        apiUrl(`${apiRoutes.uploadParkPhotos}${parkId}/photos/${encodeURIComponent(filename)}`),
+        apiUrl(`${apiRoutes.uploadParkPhotos}${parkId}/photos?file=${encodeURIComponent(filename)}`),
         { headers: adminHeaders() }
       );
       if (response.data?.park) {

@@ -183,14 +183,16 @@ app.post('/api/parks/:id/photos', requireAdmin, (req, res) => {
   });
 });
 
-app.delete('/api/parks/:id/photos/:filename', requireAdmin, async (req, res) => {
+// Filename goes in ?file= — a path ending in .jpg would hit nginx's static-image rule instead of /api/.
+app.delete('/api/parks/:id/photos', requireAdmin, async (req, res) => {
   try {
     const park = await GetParkById(req.params.id);
     if (!park) return res.status(404).json({ message: 'Park not found' });
 
-    deleteParkPhoto(park.parkName, req.params.filename);
+    const filename = String(req.query.file || '');
+    deleteParkPhoto(park.parkName, filename);
     const refreshed = await GetParkById(req.params.id);
-    console.log('[delete-photo]', park.parkName, req.params.filename);
+    console.log('[delete-photo]', park.parkName, filename);
     res.json({ ok: true, photos: refreshed?.photos || [], park: refreshed });
   } catch (err) {
     console.error('[delete-photo]', err);
