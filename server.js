@@ -32,8 +32,9 @@ const upload = multer({
 });
 
 function requireAdmin(req, res, next) {
-  const adminKey = process.env.ADMIN_API_KEY;
-  if (adminKey && req.headers['x-admin-key'] === adminKey) {
+  const adminKey = String(process.env.ADMIN_API_KEY || '').trim();
+  const provided = String(req.headers['x-admin-key'] || '').trim();
+  if (adminKey && provided && provided === adminKey) {
     return next();
   }
   // Local/dev convenience only — never set ALLOW_OPEN_ADMIN on production.
@@ -42,8 +43,8 @@ function requireAdmin(req, res, next) {
   }
   return res.status(403).json({
     message: adminKey
-      ? 'Admin access required'
-      : 'Admin access required — set ADMIN_API_KEY on the server',
+      ? 'Admin access required — check x-admin-key'
+      : 'Admin access required — set ADMIN_API_KEY on the server and restart the API',
   });
 }
 
