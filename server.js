@@ -12,7 +12,12 @@ const {
   InsertPark,
   DeletePark,
 } = require('./sqldb/sqlclient');
-const { ASSETS_ROOT, saveUploadedParkPhoto, refreshIndex } = require('./lib/parkPhotos');
+const {
+  ASSETS_ROOT,
+  saveUploadedParkPhoto,
+  deleteParkPhoto,
+  refreshIndex,
+} = require('./lib/parkPhotos');
 const { validateSuggestion, saveSuggestion } = require('./lib/suggestPark');
 
 const app = express();
@@ -176,6 +181,21 @@ app.post('/api/parks/:id/photos', requireAdmin, (req, res) => {
         .json({ message: uploadErr.status ? uploadErr.message : 'Failed to save photos' });
     }
   });
+});
+
+app.delete('/api/parks/:id/photos/:filename', requireAdmin, async (req, res) => {
+  try {
+    const park = await GetParkById(req.params.id);
+    if (!park) return res.status(404).json({ message: 'Park not found' });
+
+    deleteParkPhoto(park.parkName, req.params.filename);
+    const refreshed = await GetParkById(req.params.id);
+    console.log('[delete-photo]', park.parkName, req.params.filename);
+    res.json({ ok: true, photos: refreshed?.photos || [], park: refreshed });
+  } catch (err) {
+    console.error('[delete-photo]', err);
+    res.status(err.status || 500).json({ message: err.status ? err.message : 'Failed to delete photo' });
+  }
 });
 
 const port = Number(process.env.API_PORT) || 3001;

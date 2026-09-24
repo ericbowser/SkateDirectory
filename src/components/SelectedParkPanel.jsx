@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FetchData } from '../services/http';
+import axios from 'axios';
+import { FetchData, adminHeaders } from '../services/http';
 import { apiUrl, apiRoutes } from '../config/env';
 import { getDirectionsUrl } from '../utils/directions';
 import ParkPhotoGallery from './ParkPhotoGallery';
@@ -15,6 +16,37 @@ const SelectedParkPanel = ({ park, onClose, showCloseButton = true, closeLabel =
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [deletingPhoto, setDeletingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState(null);
+
+  const handleDeletePhoto = async (photo) => {
+    const parkId = details?.id || park?.id;
+    const rawUrl = photo.url || photo.photoUrl || '';
+    const filename = decodeURIComponent(rawUrl.split('?')[0].split('/').pop() || '');
+    if (!parkId || !filename) return;
+
+    setDeletingPhoto(true);
+    setPhotoError(null);
+    try {
+      const response = await axios.delete(
+        apiUrl(`${apiRoutes.uploadParkPhotos}${parkId}/photos/${encodeURIComponent(filename)}`),
+        { headers: adminHeaders() }
+      );
+      if (response.data?.park) {
+        setDetails(response.data.park);
+      } else if (response.data?.photos) {
+        setDetails((prev) => ({ ...(prev || park), photos: response.data.photos }));
+      }
+    } catch (err) {
+      setPhotoError(
+        err.response?.status === 403
+          ? 'Admin key required — set it with "Admin key" next to Add photos, then try again.'
+          : err.response?.data?.message || err.message || 'Could not delete photo'
+      );
+    } finally {
+      setDeletingPhoto(false);
+    }
+  };
 
   useEffect(() => {
     if (!park?.id) {
@@ -212,7 +244,17 @@ const SelectedParkPanel = ({ park, onClose, showCloseButton = true, closeLabel =
               }}
             />
           </div>
-          <ParkPhotoGallery photos={photos} parkName={data.parkName || data.ParkName} />
+          {photoError && (
+            <p className="text-sm text-rose-400" role="alert">
+              {photoError}
+            </p>
+          )}
+          <ParkPhotoGallery
+            photos={photos}
+            parkName={data.parkName || data.ParkName}
+            onDelete={handleDeletePhoto}
+            deleting={deletingPhoto}
+          />
         </div>
       </div>
     </section>
